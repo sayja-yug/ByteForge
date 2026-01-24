@@ -17,11 +17,15 @@ User (AbstractUser)
 │   ├── LearningPath (1:N)
 │   ├── QuizAttempt (1:N)
 │   ├── GamificationProfile (1:1)
-│   └── TeacherIntervention (1:N)
+│   ├── TeacherIntervention (1:N)
+│   ├── TeacherMark (1:N)
+│   └── ReportCard (1:N)
 ├── TeacherProfile (1:1)
 │   ├── LearningResource (1:N) - created_by
 │   ├── Assessment (1:N) - created_by
-│   └── TeacherIntervention (1:N)
+│   ├── TeacherIntervention (1:N)
+│   ├── TeacherMark (1:N)
+│   └── ReportCard (1:N)
 └── ParentProfile (1:1)
     └── StudentProfile (1:N) - children
 
@@ -65,6 +69,8 @@ LearningPath (M:N) ↔ Topic (through LearningPathStep)
 - `Badge` - Achievement definitions
 - `AuditLog` - Security and compliance tracking
 - `TeacherIntervention` - Support action tracking
+- `TeacherMark` - Manual grading and feedback
+- `ReportCard` - Formal academic records
 
 ---
 
@@ -228,6 +234,22 @@ LearningPath (M:N) ↔ Topic (through LearningPathStep)
 | `current_streak` | Habit formation | Encourages daily practice |
 | `badges_earned` | Achievement recognition | Motivates goal completion |
 
+#### TeacherMark Fields
+
+| Field | Purpose | AI Usage |
+|-------|---------|----------|
+| `marks_obtained` | Numeric score | Tracks manual assessment performance |
+| `percentage` | Performance metric | Standardizes scores for analytics |
+| `notes` | Qualitative feedback | Rich context for student improvement |
+
+#### ReportCard Fields
+
+| Field | Purpose | AI Usage |
+|-------|---------|----------|
+| `grades_data` | Structured academic data | JSON storage for multi-subject trends |
+| `total_percentage` | Aggregated performance | High-level academic tracking |
+| `remarks` | Teacher evaluation | Formal narrative of student progress |
+
 ---
 
 ## Scalability Considerations
@@ -313,6 +335,6 @@ This database design provides:
 - ✅ **Scalability** for future ML and APIs
 - ✅ **Security** through audit logging
 
-**Total Models: 20**
+**Total Models: 23**
 **Total Apps: 5**
 **Ready for hackathon demo and real-world deployment**

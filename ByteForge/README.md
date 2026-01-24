@@ -7,14 +7,17 @@
 ### For Students
 - AI-powered personalized recommendations with explanations
 - Browse subjects, topics, and learning resources
+- **Unified Diagnostic Assessment** to identify initial knowledge gaps
 - Interactive quiz system with instant feedback
 - Progress tracking with XP and achievements
 - Gamification (levels, badges, streaks)
 - Learning path generation
-- Performance analytics
+- Performance analytics and **Formal Report Cards**
 
 ### For Teachers
 - AI quiz generator
+- **Manual Mark Entry** for offline assessments
+- **Formal Report Card generation**
 - Class performance analytics
 - Student performance tracking
 - Struggling student identification
@@ -24,6 +27,7 @@
 
 ### For Parents
 - Children progress monitoring
+- **View Formal Report Cards**
 - Weekly summary reports
 - Early warning alerts
 - Notification system (email/SMS)
@@ -89,13 +93,13 @@ python manage.py runserver
 
 ## 🏗️ Architecture
 
-### Database Models (20 Total)
+### Database Models (23 Total)
 
 - **accounts** (4): User, StudentProfile, TeacherProfile, ParentProfile
 - **learning** (5): Subject, Topic, LearningResource, LearningActivity, StudentPerformance
 - **recommendations** (4): Recommendation, LearningPath, LearningPathStep, Feedback
 - **assessments** (4): Assessment, Question, QuizAttempt, QuestionResponse
-- **analytics** (4): GamificationProfile, Badge, AuditLog, TeacherIntervention
+- **analytics** (6): GamificationProfile, Badge, AuditLog, TeacherIntervention, TeacherMark, ReportCard
 
 ## 🎯 Key Innovations
 

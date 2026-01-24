@@ -42,6 +42,8 @@
 - **Badges**: Achievement definitions
 - **Audit Logs**: Security and compliance (read-only)
 - **Teacher Interventions**: Support action tracking
+- **Teacher Marks**: Manual marks entered by teachers
+- **Report Cards**: Formal academic report documents
 
 ---
 
@@ -130,13 +132,13 @@
 4. **Create Badges** for achievements
 5. **Track Streaks** via daily activity
 
-### For Testing Assessments
+### For Testing Assessments & Reports
 
-1. **Create Assessment** with questions
-2. **Publish Assessment**
-3. **Create Quiz Attempt** for a student
-4. **Add Question Responses**
-5. **Review Performance** and mistakes
+1. **Create Diagnostic Assessment**: Add an assessment with type 'diagnostic' and publish it.
+2. **Take Diagnostic**: As a student, complete the assessment to see the AI-generated learning path.
+3. **Enter Marks**: As a teacher, enter manual marks for students in the **Teacher Marks** section.
+4. **Issue Report Card**: As a teacher, use the student's profile or the **Report Cards** section to issue a formal report.
+5. **Review Performance**: Check the academic trends in the results views.
 
 ---
 
@@ -196,9 +198,11 @@
 - 10-15 Topics across subjects
 - 20-30 Learning Resources (mix of videos, PDFs, quizzes)
 - 5-10 Students with varied profiles
+- **Complete Diagnostic Assessment data** for at least 2 students
 - 2-3 Teachers
 - 1-2 Parents
 - 10-15 Assessments with questions
+- **Sample Teacher Marks and 2-3 Report Cards issued**
 - Sample quiz attempts with performance data
 - AI-generated recommendations with explanations
 

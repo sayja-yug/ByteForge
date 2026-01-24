@@ -61,7 +61,7 @@ A comprehensive AI-powered personalized learning recommendation system with mult
 - **Frontend**: HTML, CSS, Vanilla JavaScript
 - **AI Engine**: Rule-based recommendation system
 
-### Database Models (20 Total)
+### Database Models (23 Total)
 
 **accounts** (4 models):
 - User (custom user model)
@@ -88,11 +88,13 @@ A comprehensive AI-powered personalized learning recommendation system with mult
 - QuizAttempt
 - QuestionResponse
 
-**analytics** (4 models):
+**analytics** (6 models):
 - GamificationProfile
 - Badge
 - AuditLog
 - TeacherIntervention
+- **TeacherMark** (Manual grading)
+- **ReportCard** (Formal academic reports)
 
 ---
 
@@ -144,8 +146,9 @@ python manage.py runserver
 **Getting Started**:
 1. Register at `/accounts/register/student/`
 2. Complete your profile with learning preferences
-3. Browse subjects and topics
-4. Start learning and earn XP
+3. **Take the Diagnostic Assessment**: Complete the initial test at `/assessments/diagnostic/` to generate your base learning path.
+4. Browse subjects and topics
+5. Start learning and earn XP
 
 **Taking Quizzes**:
 1. Navigate to a topic
@@ -158,6 +161,10 @@ python manage.py runserver
 2. See AI recommendations with explanations
 3. Click "Why this recommendation?" to see reasoning
 4. Follow suggested learning paths
+
+**My Reports**:
+1. Go to "My Reports" in the navigation bar
+2. View and download your formal academic report cards issued by teachers.
 
 ### Teacher Guide
 
@@ -178,6 +185,11 @@ python manage.py runserver
 1. Identify struggling students
 2. Log intervention in admin panel
 3. Track effectiveness over time
+
+**Managing Report Cards & Marks**:
+1. **Enter Marks**: Use the teacher dashboard to enter manual marks for students for offline tests or assignments.
+2. **Issue Report Card**: Navigate to a student's profile and click "Issue Report Card" to create a formal academic report.
+3. **Review Performance**: Use the analytics section to see student performance trends over time.
 
 ### Parent Guide
 
