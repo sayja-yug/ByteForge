@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load learning_filters %}
+
+{% block title %}My Report Cards - SmartShiksha{% endblock %}
+
+{% block extra_css %}
+<style>
+    .reports-container {
+        max-width: 1000px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    .report-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 25px;
+    }
+
+    .report-list-card {
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .report-list-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1);
+        border-color: #6366f1;
+    }
+
+    .report-term {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: #1e293b;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .report-session {
+        color: #64748b;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+    }
+
+    .report-stats {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .mini-stat {
+        flex: 1;
+        padding: 10px;
+        background: #f8fafc;
+        border-radius: 10px;
+        text-align: center;
+    }
+
+    .stat-val {
+        font-weight: 800;
+        color: #6366f1;
+        font-size: 1.1rem;
+        display: block;
+    }
+
+    .stat-lab {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: #94a3b8;
+    }
+
+    .btn-view-report {
+        margin-top: auto;
+        width: 100%;
+        padding: 12px;
+        background: #f1f5f9;
+        color: #475569;
+        text-decoration: none;
+        border-radius: 10px;
+        text-align: center;
+        font-weight: 700;
+        transition: all 0.2s;
+    }
+
+    .report-list-card:hover .btn-view-report {
+        background: #6366f1;
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px;
+        background: white;
+        border-radius: 20px;
+        border: 2px dashed #e2e8f0;
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: #cbd5e1;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reports-container">
+    <div class="section-header fadeInUp" style="margin-bottom: 40px;">
+        <h1 style="font-weight: 800; font-size: 2.5rem; color: #1e293b;">🎓 Academic History</h1>
+        <p style="color: #64748b; font-size: 1.1rem;">Track your progress across multiple terms and sessions</p>
+    </div>
+
+    {% if reports %}
+    <div class="report-grid">
+        {% for report in reports %}
+        <div class="report-list-card fadeInUp" style="animation-delay: {{ forloop.counter0|add:1|multiply:0.1 }}s">
+            <div class="report-term">
+                <i class="fas fa-file-alt" style="color: #6366f1;"></i>
+                {{ report.term }}
+            </div>
+            <div class="report-session">{{ report.academic_session }} Session</div>
+
+            <div class="report-stats">
+                <div class="mini-stat">
+                    <span class="stat-val">{{ report.total_percentage }}%</span>
+                    <span class="stat-lab">Score</span>
+                </div>
+                <div class="mini-stat">
+                    <span class="stat-val">{{ report.attendance_percentage }}%</span>
+                    <span class="stat-lab">Attendance</span>
+                </div>
+            </div>
+
+            <a href="{% url 'analytics:report_card_detail' report.id %}" class="btn-view-report">
+                View Full Report
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state fadeInUp">
+        <div class="empty-icon">📭</div>
+        <h3>No Report Cards Found</h3>
+        <p>Your official academic reports will appear here once issued by your teachers.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Diagnostic Assessment - SmartShiksha{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 4rem 1rem;">
+    <div class="text-center mb-5">
+        <h1 class="gradient-text" style="font-size: 2.5rem; margin-bottom: 1rem;">Skill Diagnostic Assessment</h1>
+        <p class="text-muted" style="max-width: 600px; margin: 0 auto;">
+            Complete this one-time assessment to help our AI personalize your learning journey.
+            We'll analyze your strengths and weaknesses to create a custom study plan.
+        </p>
+    </div>
+
+    <div class="card" style="max-width: 800px; margin: 0 auto; padding: 2rem;">
+        <form method="post">
+            {% csrf_token %}
+
+            {% for assessment in assessments %}
+            <div class="assessment-section mb-5">
+                <div class="d-flex justify-content-between align-items-center mb-3"
+                    style="border-bottom: 2px solid {{ assessment.topic.subject.color_code|default:'#3498db' }}; padding-bottom: 0.5rem;">
+                    <h3 style="color: {{ assessment.topic.subject.color_code|default:'#3498db' }}; margin: 0;">
+                        {{ assessment.topic.subject.name }}: {{ assessment.topic.name }}
+                    </h3>
+                    <span class="badge" style="background: #eee; color: #555;">{{ assessment.questions.count }}
+                        Questions</span>
+                </div>
+
+                {% for question in assessment.questions.all %}
+                <div class="question-card mb-4" style="background: #f8f9fa; padding: 1.5rem; border-radius: 12px;">
+                    <p class="fw-bold mb-3" style="font-size: 1.1rem;">
+                        {{ forloop.counter }}. {{ question.question_text }}
+                    </p>
+
+                    <div class="options-grid">
+                        {% for option in question.options %}
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="question_{{ question.id }}"
+                                id="q{{ question.id }}_opt{{ forloop.counter }}" value="{{ option }}" required>
+                            <label class="form-check-label" for="q{{ question.id }}_opt{{ forloop.counter }}"
+                                style="margin-left: 0.5rem;">
+                                {{ option }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted">No questions available for this topic.</p>
+                {% endfor %}
+            </div>
+            {% endfor %}
+
+            <div class="text-center mt-5">
+                <button type="submit" class="btn btn-primary" style="padding: 1rem 3rem; font-size: 1.2rem;">
+                    Submit Assessment <i class="fas fa-arrow-right list-inline-item"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .gradient-text {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .form-check-input:checked {
+        background-color: #764ba2;
+        border-color: #764ba2;
+    }
+
+    .question-card:hover {
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+</style>
+{% endblock %}

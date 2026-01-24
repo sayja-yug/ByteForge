@@ -1,0 +1,694 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Parent Dashboard - SmartShiksha{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Page-specific dynamic styles */
+    .dashboard-header {
+        animation: fadeInUp 0.8s ease-out;
+    }
+
+    .notification-card {
+        animation: fadeInUp 0.8s ease-out 0.2s backwards;
+    }
+
+    .dashboard-card {
+        animation: fadeInUp 0.8s ease-out 0.4s backwards;
+    }
+
+    .child-card-detailed {
+        animation: fadeInUp 0.8s ease-out;
+    }
+
+    .stat-row {
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .stat-row:hover {
+        transform: scale(1.03) translateX(10px);
+        background: white;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .badge-dynamic {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background: var(--primary);
+        color: white;
+        transition: all 0.3s;
+    }
+
+    .badge-dynamic:hover {
+        transform: scale(1.1);
+        filter: brightness(1.1);
+    }
+
+    .grade-tag {
+        font-size: 0.8rem;
+        background: var(--border);
+        padding: 2px 8px;
+        border-radius: 4px;
+        display: inline-block;
+        margin-top: 4px;
+    }
+
+    .connect-form {
+        margin-top: var(--spacing-sm);
+    }
+
+    .error-text {
+        color: #ef4444;
+        font-size: 0.875rem;
+        margin-top: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="container">
+
+        <!-- Dynamic Header -->
+        <div class="dashboard-header">
+            <div class="header-main">
+                <h1>Welcome Back, {{ user.first_name }}! 👋</h1>
+                <p>Track and support your child's educational journey with AI-driven insights.</p>
+            </div>
+        </div>
+
+        <!-- Notification Settings - Premium Glass Card -->
+        <div class="notification-card reveal-hidden">
+            <div class="notification-header">
+                <h3>🔔 Notification Settings</h3>
+            </div>
+
+            <div class="notification-settings">
+                <div class="setting-item">
+                    <span>Email Reports</span>
+                    <span class="setting-value">
+                        {% if parent.email_notifications %}
+                        <span style="color: #10b981;">● Enabled</span>
+                        {% else %}
+                        <span style="color: #ef4444;">○ Disabled</span>
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div class="setting-item">
+                    <span>SMS Alerts</span>
+                    <span class="setting-value">
+                        {% if parent.sms_notifications %}
+                        <span style="color: #10b981;">● Enabled</span>
+                        {% else %}
+                        <span style="color: #ef4444;">○ Disabled</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Children Overview -->
+        <div class="dashboard-grid">
+            <div class="dashboard-card full-width reveal-hidden">
+                <div class="card-header" style="margin-bottom: 1.5rem;">
+                    <h3>👨‍👩‍👧‍👦 Your Children</h3>
+                    <p class="info-text">Comprehensive overview of academic progress and activity</p>
+                </div>
+
+                {% if children %}
+                <div class="children-grid">
+                    {% for child in children %}
+                    <div class="child-card-detailed">
+                        <div class="child-header">
+                            <div class="child-avatar">
+                                {{ child.user.first_name|slice:":1" }}
+                            </div>
+                            <div class="child-info">
+                                <h4>{{ child.user.get_full_name }}</h4>
+                                <p class="grade-tag">{{ child.grade_level }} • {{ child.school_name|default:"Home
+                                    Schooling" }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Quick Stats Grid -->
+                        <div class="quick-stats-grid">
+                            <div class="quick-stat">
+                                <span class="quick-stat-value" style="color: white;">{{ child.current_streak }}</span>
+                                <span class="quick-stat-label" style="color: rgba(255, 255, 255, 0.8);">Day Streak
+                                    🔥</span>
+                            </div>
+                            <div class="quick-stat">
+                                <span class="quick-stat-value" style="color: white;">{{
+                                    child.total_study_time|default:"0" }}</span>
+                                <span class="quick-stat-label" style="color: rgba(255, 255, 255, 0.8);">Minutes
+                                    Studied</span>
+                            </div>
+                            <div class="quick-stat">
+                                <span class="quick-stat-value" style="color: white;">{{
+                                    child.get_learning_style_display|default:"Mixed"|slice:":8" }}</span>
+                                <span class="quick-stat-label" style="color: rgba(255, 255, 255, 0.8);">Learning
+                                    Style</span>
+                            </div>
+                        </div>
+
+                        <!-- Learning Stats -->
+                        <div class="child-stats">
+                            <div class="stat-row">
+                                <span class="stat-label">📅 Last Active</span>
+                                <span class="stat-value">{{ child.last_active|date:"M d, Y"|default:"Recently" }}</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">🏆 Longest Streak</span>
+                                <span class="stat-value">{{ child.longest_streak }} Days</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label">🎯 Academic Goals</span>
+                                <span class="stat-value">{{ child.academic_goals|default:"Not set"|truncatechars:20
+                                    }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Smart Alerts -->
+                        <div class="insights-section">
+                            {% if child.current_streak >= 5 %}
+                            <div class="alert-box success">
+                                <span class="alert-icon">✨</span>
+                                <span>Amazing! <strong>{{ child.current_streak }}</strong> day streak!</span>
+                            </div>
+                            {% elif child.current_streak == 0 %}
+                            <div class="alert-box info">
+                                <span class="alert-icon">💡</span>
+                                <span>Encourage a short study session to start a streak!</span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Report Cards Section -->
+                        <div class="report-cards-section"
+                            style="margin-top: var(--spacing-lg); padding-top: var(--spacing-md); border-top: 1px dashed var(--border);">
+                            <h5
+                                style="font-size: 0.875rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: var(--spacing-md);">
+                                📊 Published Report Cards</h5>
+                            {% with report_cards=child.report_cards.filter.is_published %}
+                            {% if child.report_cards.all %}
+                            <div class="report-list" style="display: flex; flex-direction: column; gap: 8px;">
+                                {% for report in child.report_cards.all %}
+                                {% if report.is_published %}
+                                <div class="report-item"
+                                    style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border-radius: var(--radius-sm); border: 1px solid var(--border); transition: all 0.3s ease;">
+                                    <div>
+                                        <strong style="display: block; font-size: 0.9rem;">{{ report.term }}</strong>
+                                        <small style="color: var(--text-light);">{{ report.academic_session }} • {{
+                                            report.total_percentage }}%</small>
+                                    </div>
+                                    <a href="{% url 'analytics:report_card_detail' report.id %}"
+                                        class="btn btn-sm btn-outline"
+                                        style="padding: 4px 12px; font-size: 0.75rem;">View Details</a>
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <p style="font-size: 0.85rem; color: var(--text-light); font-style: italic;">No published
+                                report cards available yet.</p>
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state" style="text-align: center; padding: 3rem;">
+                    <div class="empty-icon" style="font-size: 4rem; margin-bottom: 1rem;">📂</div>
+                    <p class="placeholder-text">No child accounts are currently linked.</p>
+                    <p class="info-text" style="margin-top: 0.5rem;">Use the "Connect Your Child" section below to link
+                        your child's account.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Weekly Summary & Connection Row -->
+        <div class="dashboard-grid" style="margin-top: var(--spacing-xl);">
+            <!-- Weekly Summary (Placeholder) -->
+            <div class="dashboard-card reveal-hidden">
+                <h3>📊 Weekly Summary</h3>
+                <p class="placeholder-text">Weekly progress reports will be generated here showing:</p>
+                <ul class="feature-list" style="margin-top: 1rem; list-style: none; padding: 0;">
+                    <li style="padding: 4px 0;">✓ Total study time</li>
+                    <li style="padding: 4px 0;">✓ Topics covered</li>
+                    <li style="padding: 4px 0;">✓ Quiz scores</li>
+                    <li style="padding: 4px 0;">✓ Engagement trends</li>
+                </ul>
+            </div>
+
+            <!-- Connect Your Child -->
+            <div class="dashboard-card reveal-hidden">
+                <h3>🔗 Connect Your Child</h3>
+                <p class="info-text" style="margin-bottom: var(--spacing-md); margin-top: 0.5rem;">
+                    Enter your child's student email or username to link their account and monitor their progress.
+                </p>
+                <form action="{% url 'accounts:connect_child' %}" method="POST" class="connect-form">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        {{ connect_form.identifier }}
+                    </div>
+                    {% if connect_form.identifier.errors %}
+                    <div class="error-text">
+                        {{ connect_form.identifier.errors }}
+                    </div>
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: var(--spacing-sm);">
+                        Connect Child Account
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Parent Resources -->
+        <div class="dashboard-card reveal-hidden" style="margin-top: var(--spacing-xl);">
+            <h3>📚 Parent Resources</h3>
+            <div class="resource-links"
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                <a href="{% url 'accounts:parent_support_guide' %}" class="resource-link"
+                    style="display: flex; gap: 1rem; padding: 1rem; background: var(--bg); border-radius: var(--radius-md); text-decoration: none; color: var(--text); border: 1px solid var(--border); transition: all 0.3s;">
+                    <span style="font-size: 1.5rem;">📖</span>
+                    <div>
+                        <strong>How to Support Your Child</strong>
+                        <p style="font-size: 0.8rem; color: var(--text-light);">Tips for encouraging learning at home
+                        </p>
+                    </div>
+                </a>
+                <a href="{% url 'accounts:parent_progress_guide' %}" class="resource-link"
+                    style="display: flex; gap: 1rem; padding: 1rem; background: var(--bg); border-radius: var(--radius-md); text-decoration: none; color: var(--text); border: 1px solid var(--border); transition: all 0.3s;">
+                    <span style="font-size: 1.5rem;">💬</span>
+                    <div>
+                        <strong>Understanding Learning Progress</strong>
+                        <p style="font-size: 0.8rem; color: var(--text-light);">Guide to interpreting progress data</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .children-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: var(--spacing-lg);
+    }
+
+    .child-card-detailed {
+        background: var(--bg);
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-lg);
+        border-left: 4px solid var(--primary);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .child-header {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .child-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .child-info h4 {
+        margin: 0;
+    }
+
+    .child-stats {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .stat-row {
+        display: flex;
+        justify-content: space-between;
+        padding: var(--spacing-sm);
+        background: white;
+        border-radius: var(--radius-sm);
+    }
+
+    .stat-label {
+        color: var(--text-light);
+        font-size: 0.875rem;
+    }
+
+    .stat-row .stat-value {
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .performance-section h5 {
+        margin-bottom: var(--spacing-md);
+        font-size: 0.875rem;
+        color: var(--text-light);
+        text-transform: uppercase;
+    }
+
+    .performance-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+
+    .performance-item {
+        display: flex;
+        justify-content: space-between;
+        padding: var(--spacing-sm);
+        background: white;
+        border-radius: var(--radius-sm);
+        font-size: 0.875rem;
+    }
+
+    .perf-score {
+        font-weight: 700;
+    }
+
+    .score-high {
+        color: var(--success);
+    }
+
+    .score-medium {
+        color: var(--warning);
+    }
+
+    .score-low {
+        color: var(--danger);
+    }
+
+    .alert-box {
+        padding: var(--spacing-md);
+        border-radius: var(--radius-md);
+        margin-top: var(--spacing-md);
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .alert-box.warning {
+        background: #fef3c7;
+        color: #92400e;
+        border-left: 4px solid var(--warning);
+    }
+
+    .alert-box.info {
+        background: #dbeafe;
+        color: #1e40af;
+        border-left: 4px solid var(--info);
+    }
+
+    .alert-box.success {
+        background: #d1fae5;
+        color: #065f46;
+        border-left: 4px solid var(--success);
+    }
+
+    .notification-settings {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--spacing-md);
+        margin-top: 1rem;
+    }
+
+    .setting-item {
+        display: flex;
+        justify-content: space-between;
+        padding: var(--spacing-md);
+        background: rgba(0, 0, 0, 0.02);
+        border-radius: var(--radius-md);
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--spacing-lg);
+    }
+
+    .dashboard-grid .full-width {
+        grid-column: 1 / -1;
+    }
+
+    /* Score Badge */
+    .score-badge {
+        font-size: 1.25rem;
+        font-weight: 800;
+        padding: 8px 16px;
+        border-radius: 12px;
+        margin-left: auto;
+    }
+
+    .score-badge.score-high {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .score-badge.score-medium {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .score-badge.score-low {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    /* Quick Stats Grid */
+    .quick-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--spacing-sm);
+        margin: var(--spacing-lg) 0;
+        padding: var(--spacing-md);
+        background: linear-gradient(135deg, #A1927E 0%, #B3A697 100%);
+        border-radius: var(--radius-md);
+        color: white;
+    }
+
+    .quick-stat {
+        text-align: center;
+        padding: var(--spacing-sm);
+    }
+
+    .quick-stat-value {
+        display: block;
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: var(--primary);
+    }
+
+    .quick-stat-label {
+        font-size: 0.75rem;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Subject Progress Bars */
+    .subject-section h5,
+    .quiz-history-section h5,
+    .activity-section h5 {
+        font-size: 0.875rem;
+        color: var(--text-light);
+        margin-bottom: var(--spacing-md);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .subject-bars {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .subject-bar-item {
+        padding: var(--spacing-xs) 0;
+    }
+
+    .subject-bar-header {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        margin-bottom: 4px;
+    }
+
+    .subject-score {
+        font-weight: 600;
+    }
+
+    .progress-bar-bg {
+        height: 8px;
+        background: var(--border);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.6s ease;
+    }
+
+    .bar-high {
+        background: linear-gradient(90deg, #10b981, #34d399);
+    }
+
+    .bar-medium {
+        background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    }
+
+    .bar-low {
+        background: linear-gradient(90deg, #ef4444, #f87171);
+    }
+
+    /* Quiz History */
+    .quiz-history-section {
+        margin-top: var(--spacing-lg);
+    }
+
+    .quiz-history-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+
+    .quiz-history-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-sm);
+        background: white;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+    }
+
+    .quiz-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .quiz-name {
+        font-weight: 500;
+        font-size: 0.875rem;
+    }
+
+    .quiz-topic {
+        font-size: 0.75rem;
+        color: var(--text-light);
+    }
+
+    .quiz-meta {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .quiz-date {
+        font-size: 0.75rem;
+        color: var(--text-light);
+    }
+
+    .quiz-score {
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+    }
+
+    .quiz-score.score-high {
+        background: #d1fae5;
+    }
+
+    .quiz-score.score-medium {
+        background: #fef3c7;
+    }
+
+    .quiz-score.score-low {
+        background: #fee2e2;
+    }
+
+    /* Activity Timeline */
+    .activity-section {
+        margin-top: var(--spacing-lg);
+    }
+
+    .activity-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm);
+        background: white;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+    }
+
+    .activity-icon {
+        font-size: 1.25rem;
+    }
+
+    .activity-info {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .activity-title {
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .activity-time {
+        font-size: 0.7rem;
+        color: var(--text-light);
+    }
+
+    /* Insights Section */
+    .insights-section {
+        margin-top: var(--spacing-lg);
+        padding-top: var(--spacing-md);
+        border-top: 1px dashed var(--border);
+    }
+
+    .insights-section .alert-box:first-child {
+        margin-top: 0;
+    }
+
+    /* Resource Links Hover Effect */
+    .resource-link:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+        border-color: var(--primary);
+    }
+</style>
+{% endblock %}

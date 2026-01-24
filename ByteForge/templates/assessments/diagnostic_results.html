@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}Diagnostic Results - SmartShiksha{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 4rem 1rem;">
+    <!-- Header Section -->
+    <div class="text-center mb-5">
+        <span class="badge bg-success mb-2"
+            style="font-size: 0.9rem; padding: 0.5em 1em; background: #28a745; color: white; border-radius: 20px;">Analysis
+            Complete</span>
+        <h1 class="mb-3">Your Personalized Learning Profile</h1>
+        <p class="text-muted">Based on your diagnostic, we've identified your current level and created a roadmap for
+            you.</p>
+    </div>
+
+    <!-- Level & Summary Card -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-8">
+            <div class="card text-center p-5"
+                style="border: none; box-shadow: var(--shadow-lg); border-radius: 20px; background: linear-gradient(135deg, #ffffff 0%, #f7f9fc 100%);">
+                <h3 class="text-uppercase text-muted" style="font-size: 0.9rem; letter-spacing: 2px;">Readiness Level
+                </h3>
+                <h2 class="display-4 fw-bold mb-4" style="color: #4a5568;">{{ classification }}</h2>
+
+                <div class="row mt-4">
+                    <div class="col-6" style="border-right: 1px solid #eee;">
+                        <h4 class="text-success mb-3">Strengths 💪</h4>
+                        <ul class="list-unstyled">
+                            {% for record in strong_topics %}
+                            <!-- Safe formatting for template tags -->
+                            <li class="mb-2">
+                                {{ record.topic.subject.name }} - {{ record.topic.name }}
+                                ({{ record.percentage|floatformat:0 }}%)
+                            </li>
+                            {% empty %}
+                            <li class="text-muted">Keep practicing to build strengths!</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-warning mb-3">Focus Areas 🎯</h4>
+                        <ul class="list-unstyled">
+                            {% for record in weak_topics %}
+                            <!-- Safe formatting for template tags -->
+                            <li class="mb-2">
+                                {{ record.topic.subject.name }} - {{ record.topic.name }}
+                                ({{ record.percentage|floatformat:0 }}%)
+                            </li>
+                            {% empty %}
+                            <li class="text-muted">Great job! No major gaps found.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Learning Path Section -->
+    <div class="mb-5">
+        <h2 class="section-title text-center mb-4">Your 7-Day Starter Plan</h2>
+        {% if learning_path %}
+        <div class="path-timeline" style="max-width: 800px; margin: 0 auto;">
+            {% for step in learning_path.steps.all %}
+            <div class="timeline-item d-flex mb-4 p-3 align-items-center"
+                style="background: white; border-radius: 12px; box-shadow: var(--shadow-sm); border-left: 5px solid {% if step.status == 'available' %}#28a745{% else %}#ccc{% endif %};">
+                <div class="step-number me-4 display-6 fw-bold text-muted" style="min-width: 60px;">0{{ step.step_number }}</div>
+                <div class="flex-grow-1">
+                    <h5 class="mb-1">{{ step.title }}</h5>
+                    <p class="mb-0 text-muted">{{ step.description }}</p>
+                </div>
+                <div>
+                    <span class="badge {% if step.status == 'available' %}bg-success{% else %}bg-secondary{% endif %}"
+                        style="color: white; padding: 0.5em;">
+                        {{ step.status|title }}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-warning text-center">
+            Path generation pending. Please refresh in a moment.
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="text-center">
+        <a href="{% url 'accounts:dashboard' %}" class="btn btn-primary btn-lg">Go to Dashboard</a>
+    </div>
+</div>
+{% endblock %}

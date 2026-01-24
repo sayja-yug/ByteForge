@@ -1,0 +1,238 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SmartShiksha{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <script>
+        // Immediate check to prevent loader flicker on subsequent page views in the same session
+        if (sessionStorage.getItem('hasVisited')) {
+            document.write('<style>.loader-wrapper { display: none !important; }</style>');
+        }
+    </script>
+
+    <!-- Scroll Progress -->
+    <div class="scroll-progress"></div>
+
+    <!-- Loading Screen (Educational Book) -->
+    <div class="loader-wrapper">
+        <div class="book">
+            <div class="inner">
+                <div class="left"></div>
+                <div class="middle"></div>
+                <div class="right"></div>
+            </div>
+            <ul>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+                <li></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <a href="{% url 'home' %}">🎓 SmartShiksha</a>
+            </div>
+            <div class="nav-links">
+                {% if user.is_authenticated %}
+                <a href="{% url 'accounts:dashboard' %}">Dashboard</a>
+                {% if user.role == 'student' %}
+                <a href="{% url 'learning:browse_subjects' %}">Browse</a>
+                <a href="{% url 'learning:my_learning' %}">My Learning</a>
+                {% endif %}
+                <span class="user-info">{{ user.first_name }} ({{ user.get_role_display }})</span>
+                <a href="{% url 'accounts:logout' %}" class="btn-logout">Logout</a>
+                {% else %}
+                <a href="{% url 'learning:browse_subjects' %}" class="nav-link">Browse Subjects</a>
+                <a href="{% url 'accounts:login' %}" class="btn btn-outline">Login</a>
+                <a href="{% url 'accounts:register_choice' %}" class="btn btn-primary">Get Started</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 SmartShiksha. Built for personalized education.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Page Loader handling - Show once per session
+        window.addEventListener('load', () => {
+            const loader = document.querySelector('.loader-wrapper');
+            if (!sessionStorage.getItem('hasVisited')) {
+                loader.classList.add('loader-hidden');
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                }, 800);
+                sessionStorage.setItem('hasVisited', 'true');
+            } else {
+                loader.style.display = 'none';
+            }
+        });
+
+        // Scroll Progress & Navbar dynamic
+        window.addEventListener('scroll', () => {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.querySelector(".scroll-progress").style.width = scrolled + "%";
+
+            const navbar = document.querySelector('.navbar');
+            if (winScroll > 50) {
+                navbar.style.background = 'rgba(255, 255, 255, 0.95)';
+                navbar.style.boxShadow = 'var(--shadow-md)';
+            } else {
+                navbar.style.background = 'rgba(255, 255, 255, 0.8)';
+                navbar.style.boxShadow = 'var(--shadow-sm)';
+            }
+        });
+
+        // Scroll Reveal Effect
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('reveal-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const reveals = [
+                '.feature-card',
+                '.role-card',
+                '.hero-content',
+                '.section-title',
+                '.cta > .container',
+                '.dashboard-card',
+                '.auth-container',
+                '.gamification-banner',
+                '.stats-grid-teacher',
+                '.improvement-metrics',
+                '.analytics-row'
+            ];
+
+            reveals.forEach(selector => {
+                document.querySelectorAll(selector).forEach(el => {
+                    el.classList.add('reveal-hidden');
+                    observer.observe(el);
+                });
+            });
+
+            // Button Hover Ripple Effect
+            document.querySelectorAll('.btn').forEach(btn => {
+                btn.addEventListener('mousemove', (e) => {
+                    const rect = btn.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    btn.style.setProperty('--x', `${x}px`);
+                    btn.style.setProperty('--y', `${y}px`);
+                });
+            });
+
+            // Subtle Background Mouse Parallax
+            document.addEventListener('mousemove', (e) => {
+                const moveX = (e.clientX - window.innerWidth / 2) * 0.01;
+                const moveY = (e.clientY - window.innerHeight / 2) * 0.01;
+                document.body.style.backgroundPosition = `calc(50% + ${moveX}px) calc(50% + ${moveY}px)`;
+            });
+        });
+
+        const style = document.createElement('style');
+        style.textContent = `
+            .reveal-hidden {
+                opacity: 0;
+                transform: translateY(30px);
+                transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+            }
+            .reveal-visible {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            .btn {
+                position: relative;
+                overflow: hidden;
+            }
+            .btn::after {
+                content: '';
+                position: absolute;
+                top: var(--y, 0px);
+                left: var(--x, 0px);
+                width: 0;
+                height: 0;
+                background: rgba(255, 255, 255, 0.25);
+                border-radius: 50%;
+                transform: translate(-50%, -50%);
+                transition: width 0.5s ease, height 0.5s ease;
+            }
+            .btn:hover::after {
+                width: 400px;
+                height: 400px;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+
+
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

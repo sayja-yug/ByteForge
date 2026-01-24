@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add New Topic - SmartShiksha{% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-topic-container {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    .form-card {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .form-header {
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    .form-header h1 {
+        font-size: 2.2rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 10px;
+    }
+
+    .form-header p {
+        color: #64748b;
+        font-size: 1.1rem;
+    }
+
+    .form-group {
+        margin-bottom: 25px;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 10px;
+        font-size: 0.95rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 14px 18px;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: #f8fafc;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #f6d365;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(246, 211, 101, 0.1);
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .btn-submit {
+        width: 100%;
+        padding: 16px;
+        background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(246, 211, 101, 0.3);
+    }
+
+    .error-list {
+        background: #fee2e2;
+        border-left: 4px solid #ef4444;
+        padding: 15px;
+        border-radius: 12px;
+        margin-bottom: 25px;
+    }
+
+    .error-list ul {
+        margin: 0;
+        padding-left: 20px;
+        color: #991b1b;
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #64748b;
+        text-decoration: none;
+        font-weight: 600;
+        margin-bottom: 25px;
+        transition: color 0.2s;
+    }
+
+    .back-link:hover {
+        color: #f6d365;
+    }
+
+    @media (max-width: 600px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="create-topic-container">
+    <a href="{% url 'accounts:teacher_dashboard' %}" class="back-link">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+
+    <div class="form-card fadeInUp">
+        <div class="form-header">
+            <h1>📝 Add New Topic</h1>
+            <p>Define a specific learning area within a subject</p>
+        </div>
+
+        {% if form.errors %}
+        <div class="error-list">
+            <ul>
+                {% for field in form %}
+                {% for error in field.errors %}
+                <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="{{ form.subject.id_for_label }}">Select Parent Subject</label>
+                {{ form.subject }}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.name.id_for_label }}">Topic Name</label>
+                {{ form.name }}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.description.id_for_label }}">Learning Description</label>
+                {{ form.description }}
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.difficulty_level.id_for_label }}">Base Difficulty</label>
+                    {{ form.difficulty_level }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.estimated_hours.id_for_label }}">Estimated Hours</label>
+                    {{ form.estimated_hours }}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="{{ form.grade_level.id_for_label }}">Grade Level</label>
+                    {{ form.grade_level }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.order.id_for_label }}">Display Order</label>
+                    {{ form.order }}
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">
+                <i class="fas fa-plus-circle"></i> Create Topic
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

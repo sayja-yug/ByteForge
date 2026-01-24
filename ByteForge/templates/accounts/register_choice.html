@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Choose Your Role - SmartShiksha{% endblock %}
+
+{% block content %}
+<div class="register-choice-page">
+    <div class="container">
+        <div class="page-header">
+            <h1>Join Our Learning Community</h1>
+            <p>Select your role to get started with personalized learning</p>
+        </div>
+
+        <div class="roles-grid">
+            <div class="role-card">
+                <div class="role-icon">🎓</div>
+                <h2>Student</h2>
+                <ul class="role-features">
+                    <li>✓ AI-powered learning recommendations</li>
+                    <li>✓ Personalized study plans</li>
+                    <li>✓ Adaptive quizzes and assessments</li>
+                    <li>✓ Gamification with XP and badges</li>
+                    <li>✓ Progress tracking and analytics</li>
+                </ul>
+                <a href="{% url 'accounts:register_student' %}" class="btn btn-primary btn-block">Register as
+                    Student</a>
+            </div>
+
+            <div class="role-card">
+                <div class="role-icon">👨‍🏫</div>
+                <h2>Teacher</h2>
+                <ul class="role-features">
+                    <li>✓ Create and manage assessments</li>
+                    <li>✓ Class performance analytics</li>
+                    <li>✓ Student progress monitoring</li>
+                    <li>✓ AI-suggested teaching materials</li>
+                    <li>✓ Intervention tracking system</li>
+                </ul>
+                <a href="{% url 'accounts:register_teacher' %}" class="btn btn-primary btn-block">Register as
+                    Teacher</a>
+            </div>
+
+            <div class="role-card">
+                <div class="role-icon">👨‍👩‍👧</div>
+                <h2>Parent</h2>
+                <ul class="role-features">
+                    <li>✓ Monitor child's progress</li>
+                    <li>✓ Weekly progress reports</li>
+                    <li>✓ Early warning alerts</li>
+                    <li>✓ Effort vs result insights</li>
+                    <li>✓ Customizable notifications</li>
+                </ul>
+                <a href="{% url 'accounts:register_parent' %}" class="btn btn-primary btn-block">Register as Parent</a>
+            </div>
+        </div>
+
+        <div class="login-link">
+            <p>Already have an account? <a href="{% url 'accounts:login' %}">Login here</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

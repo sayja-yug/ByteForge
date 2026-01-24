@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Questions - {{ assignment.title }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1000px; margin: 2rem auto;">
+    <div class="page-header">
+        <div>
+            <h1>Add Questions</h1>
+            <p>Assignment: <strong>{{ assignment.title }}</strong></p>
+        </div>
+        <a href="{% url 'assessments:teacher_assignments' %}" class="btn btn-outline">Done</a>
+    </div>
+
+    <div class="content-grid">
+        <!-- Question Form -->
+        <div class="form-card">
+            <h3>Add New Question</h3>
+            <form method="post" class="question-form">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-error">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="{{ form.question_text.id_for_label }}">Question *</label>
+                    {{ form.question_text }}
+                    {% if form.question_text.errors %}
+                    <span class="error-text">{{ form.question_text.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.question_type.id_for_label }}">Type *</label>
+                        {{ form.question_type }}
+                        {% if form.question_type.errors %}
+                        <span class="error-text">{{ form.question_type.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.marks.id_for_label }}">Marks *</label>
+                        {{ form.marks }}
+                        {% if form.marks.errors %}
+                        <span class="error-text">{{ form.marks.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.options.id_for_label }}">Options (for MCQ)</label>
+                    {{ form.options }}
+                    {% if form.options.errors %}
+                    <span class="error-text">{{ form.options.errors.0 }}</span>
+                    {% endif %}
+                    <small class="help-text">Format: ["Option A", "Option B", "Option C", "Option D"]</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.correct_answer.id_for_label }}">Correct Answer *</label>
+                    {{ form.correct_answer }}
+                    {% if form.correct_answer.errors %}
+                    <span class="error-text">{{ form.correct_answer.errors.0 }}</span>
+                    {% endif %}
+                    <small class="help-text">For MCQ: enter 0, 1, 2, or 3 (option index)</small>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.difficulty.id_for_label }}">Difficulty *</label>
+                        {{ form.difficulty }}
+                        {% if form.difficulty.errors %}
+                        <span class="error-text">{{ form.difficulty.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.bloom_level.id_for_label }}">Bloom's Level *</label>
+                        {{ form.bloom_level }}
+                        {% if form.bloom_level.errors %}
+                        <span class="error-text">{{ form.bloom_level.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.explanation.id_for_label }}">Explanation (optional)</label>
+                    {{ form.explanation }}
+                    {% if form.explanation.errors %}
+                    <span class="error-text">{{ form.explanation.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" name="add_another" class="btn btn-outline">Add & Continue</button>
+                    <button type="submit" class="btn btn-primary">Add & Finish</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Questions List -->
+        <div class="questions-list-card">
+            <h3>Questions ({{ questions.count }})</h3>
+            {% if questions %}
+            <div class="questions-list">
+                {% for question in questions %}
+                <div class="question-item">
+                    <div class="question-header">
+                        <span class="question-number">Q{{ question.order }}</span>
+                        <span class="question-marks">{{ question.marks }} marks</span>
+                    </div>
+                    <p class="question-text">{{ question.question_text|truncatewords:15 }}</p>
+                    <div class="question-meta">
+                        <span class="badge">{{ question.get_question_type_display }}</span>
+                        <span class="badge">{{ question.get_difficulty_display }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="empty-text">No questions added yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .page-header h1 {
+        margin-bottom: 0.25rem;
+    }
+
+    .content-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+    }
+
+    .form-card,
+    .questions-list-card {
+        background: var(--surface);
+        padding: 2rem;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+    }
+
+    .form-card h3,
+    .questions-list-card h3 {
+        margin-bottom: 1.5rem;
+        color: var(--text);
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--text);
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        font-size: 1rem;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .help-text {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: var(--text-light);
+    }
+
+    .error-text {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: var(--error);
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--border);
+    }
+
+    .questions-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .question-item {
+        padding: 1rem;
+        background: var(--bg);
+        border-radius: var(--radius-md);
+        border-left: 3px solid var(--primary);
+    }
+
+    .question-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .question-number {
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .question-marks {
+        font-size: 0.875rem;
+        color: var(--text-light);
+    }
+
+    .question-text {
+        margin-bottom: 0.75rem;
+        color: var(--text);
+    }
+
+    .question-meta {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .badge {
+        padding: 0.25rem 0.5rem;
+        background: #e0e7ff;
+        color: #4338ca;
+        border-radius: var(--radius-sm);
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .empty-text {
+        text-align: center;
+        color: var(--text-light);
+        padding: 2rem;
+    }
+
+    .alert {
+        padding: 1rem;
+        border-radius: var(--radius-md);
+        margin-bottom: 1.5rem;
+    }
+
+    .alert-error {
+        background: #fee2e2;
+        color: #991b1b;
+        border-left: 4px solid var(--error);
+    }
+
+    @media (max-width: 968px) {
+        .content-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}

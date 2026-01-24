@@ -1,0 +1,337 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load learning_filters %}
+
+{% block title %}Quiz Results - SmartShiksha{% endblock %}
+
+{% block content %}
+<div class="results-page">
+    <div class="container">
+        <!-- Results Header -->
+        <div class="results-header">
+            <div
+                class="score-circle {% if attempt.percentage >= attempt.assessment.passing_marks %}pass{% else %}fail{% endif %}">
+                <div class="score-value">{{ attempt.percentage|floatformat:0 }}%</div>
+                <div class="score-label">Your Score</div>
+            </div>
+
+            <div class="results-info">
+                <div class="header-flex">
+                    <h1>{{ attempt.assessment.title }}</h1>
+                    {% if attempt.assessment.created_by %}
+                    <span class="instructor-tag">👨‍🏫 Instructor: {{ attempt.assessment.created_by.user.get_full_name|default:attempt.assessment.created_by.user.username }}</span>
+                    {% endif %}
+                </div>
+                <div class="results-stats">
+                    <div class="stat-item">
+                        <span class="stat-icon">✅</span>
+                        <div>
+                            <div class="stat-value">{{ attempt.correct_answers }}</div>
+                            <div class="stat-label">Correct</div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">❌</span>
+                        <div>
+                            <div class="stat-value">{{ attempt.wrong_answers }}</div>
+                            <div class="stat-label">Wrong</div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">📊</span>
+                        <div>
+                            <div class="stat-value">{{ attempt.score }}/{{ attempt.assessment.total_marks }}</div>
+                            <div class="stat-label">Marks</div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">⏱️</span>
+                        <div>
+                            <div class="stat-value">{{ attempt.time_taken_minutes }}</div>
+                            <div class="stat-label">Minutes</div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if attempt.percentage >= attempt.assessment.passing_marks %}
+                <div class="result-message success">
+                    🎉 Congratulations! You passed the quiz!
+                </div>
+                {% else %}
+                <div class="result-message fail">
+                    Keep practicing! Review the topics and try again.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Detailed Results -->
+        <div class="detailed-results">
+            <h2>Question-by-Question Analysis</h2>
+
+            {% for response in responses %}
+            <div class="response-card {% if response.is_correct %}correct{% else %}incorrect{% endif %}">
+                <div class="response-header">
+                    <span class="question-number">Question {{ forloop.counter }}</span>
+                    <span class="response-status">
+                        {% if response.is_correct %}
+                        ✅ Correct (+{{ response.marks_awarded }} marks)
+                        {% else %}
+                        ❌ Incorrect (0 marks)
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div class="question-text">{{ response.question.question_text }}</div>
+
+                <div class="answer-section">
+                    <div class="your-answer">
+                        <strong>Your Answer:</strong>
+                        {% if response.question.question_type == 'mcq' %}
+                        {{ response.question.options|get_item:response.student_answer|default:"Not answered" }}
+                        {% else %}
+                        {{ response.student_answer|default:"Not answered" }}
+                        {% endif %}
+                    </div>
+
+                    {% if not response.is_correct %}
+                    <div class="correct-answer">
+                        <strong>Correct Answer:</strong>
+                        {% if response.question.question_type == 'mcq' %}
+                        {{ response.question.options|get_item:response.question.correct_answer }}
+                        {% else %}
+                        {{ response.question.correct_answer }}
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if response.question.explanation %}
+                    <div class="explanation">
+                        <strong>Explanation:</strong>
+                        {{ response.question.explanation }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Actions -->
+        <div class="results-actions">
+            <a href="{% url 'learning:topic_detail' attempt.assessment.topic.id %}" class="btn btn-primary">
+                Back to Topic
+            </a>
+            <a href="{% url 'accounts:dashboard' %}" class="btn btn-secondary">
+                Go to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .results-page {
+        padding: var(--spacing-xl) 0;
+    }
+
+    .results-header {
+        background: var(--surface);
+        padding: var(--spacing-xl);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        margin-bottom: var(--spacing-xl);
+        display: flex;
+        gap: var(--spacing-xl);
+        align-items: center;
+    }
+
+    .score-circle {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .score-circle.pass {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+    }
+
+    .score-circle.fail {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+    }
+
+    .score-value {
+        font-size: 3rem;
+        font-weight: 700;
+    }
+
+    .score-label {
+        font-size: 1rem;
+        opacity: 0.9;
+    }
+
+    .results-info {
+        flex: 1;
+    }
+
+    .results-info h1 {
+        margin: 0;
+    }
+
+    .header-flex {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-md);
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+    }
+
+    .instructor-tag {
+        background: #f0f4ff;
+        color: var(--primary);
+        padding: 0.15rem 0.6rem;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 0.825rem;
+    }
+
+    .results-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: var(--spacing-md);
+        margin: var(--spacing-lg) 0;
+    }
+
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md);
+        background: var(--bg);
+        border-radius: var(--radius-md);
+    }
+
+    .stat-icon {
+        font-size: 2rem;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--text-light);
+    }
+
+    .result-message {
+        padding: var(--spacing-md);
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        text-align: center;
+        margin-top: var(--spacing-md);
+    }
+
+    .result-message.success {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .result-message.fail {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .detailed-results h2 {
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .response-card {
+        background: var(--surface);
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        margin-bottom: var(--spacing-md);
+        border-left: 4px solid;
+    }
+
+    .response-card.correct {
+        border-left-color: var(--success);
+    }
+
+    .response-card.incorrect {
+        border-left-color: var(--error);
+    }
+
+    .response-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-md);
+        padding-bottom: var(--spacing-sm);
+        border-bottom: 1px solid var(--border);
+    }
+
+    .question-number {
+        font-weight: 700;
+    }
+
+    .response-status {
+        font-weight: 600;
+    }
+
+    .question-text {
+        font-size: 1.125rem;
+        margin-bottom: var(--spacing-md);
+    }
+
+    .answer-section {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .your-answer,
+    .correct-answer,
+    .explanation {
+        padding: var(--spacing-sm);
+        background: var(--bg);
+        border-radius: var(--radius-sm);
+    }
+
+    .correct-answer {
+        background: #d1fae5;
+    }
+
+    .explanation {
+        background: #dbeafe;
+        font-style: italic;
+    }
+
+    .results-actions {
+        display: flex;
+        gap: var(--spacing-md);
+        justify-content: center;
+        margin-top: var(--spacing-xl);
+    }
+
+    @media (max-width: 768px) {
+        .results-header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .results-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}

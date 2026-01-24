@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Report Card: {{ report.term }} - SmartShiksha{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-card-print {
+        max-width: 900px;
+        margin: 40px auto;
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 50px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        position: relative;
+    }
+
+    .report-watermark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-30deg);
+        font-size: 8rem;
+        color: rgba(99, 102, 241, 0.03);
+        font-weight: 900;
+        z-index: 0;
+        pointer-events: none;
+        white-space: nowrap;
+    }
+
+    .report-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        border-bottom: 3px solid #1e293b;
+        padding-bottom: 30px;
+        margin-bottom: 40px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .school-info h2 {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #1e293b;
+        margin: 0;
+        letter-spacing: -0.025em;
+    }
+
+    .school-info p {
+        color: #64748b;
+        margin: 5px 0 0;
+        font-weight: 600;
+    }
+
+    .report-title {
+        text-align: right;
+    }
+
+    .report-title h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #6366f1;
+        margin: 0;
+        text-transform: uppercase;
+    }
+
+    .student-data-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+        margin-bottom: 40px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .data-item {
+        background: #f8fafc;
+        padding: 15px;
+        border-radius: 8px;
+    }
+
+    .data-label {
+        font-size: 0.75rem;
+        color: #64748b;
+        text-transform: uppercase;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .data-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .performance-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 40px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .performance-table th {
+        background: #1e293b;
+        color: white;
+        padding: 12px 15px;
+        text-align: left;
+        font-size: 0.9rem;
+    }
+
+    .performance-table td {
+        padding: 12px 15px;
+        border-bottom: 1px solid #e2e8f0;
+        font-weight: 500;
+    }
+
+    .performance-table tr:nth-child(even) {
+        background: #f8fafc;
+    }
+
+    .summary-section {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 50px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .percentage-box {
+        background: #6366f1;
+        color: white;
+        padding: 20px 40px;
+        border-radius: 12px;
+        text-align: center;
+    }
+
+    .percentage-value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .percentage-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        opacity: 0.9;
+    }
+
+    .remarks-box {
+        flex: 1;
+        margin-left: 40px;
+        padding: 20px;
+        border: 2px dashed #e2e8f0;
+        border-radius: 10px;
+    }
+
+    .remarks-title {
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 10px;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+    }
+
+    .signatures {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 80px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .sig-line {
+        width: 200px;
+        border-top: 2px solid #1e293b;
+        text-align: center;
+        padding-top: 10px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #475569;
+    }
+
+    .print-actions {
+        max-width: 900px;
+        margin: 20px auto;
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+    }
+
+    @media print {
+
+        .print-actions,
+        .navbar,
+        .footer {
+            display: none !important;
+        }
+
+        .report-card-print {
+            border: none;
+            box-shadow: none;
+            margin: 0;
+            padding: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="print-actions">
+    <button onclick="window.print()" class="btn btn-primary">
+        <i class="fas fa-print"></i> Print PDF
+        </a>
+</div>
+
+<div class="report-card-print">
+    <div class="report-watermark">SMARTSHIKSHA</div>
+
+    <div class="report-header">
+        <div class="school-info">
+            <h2>SMARTSHIKSHA ACADEMY</h2>
+            <p>Empowering Next-Generation Learners</p>
+        </div>
+        <div class="report-title">
+            <h1>Progress Report</h1>
+            <p><strong>Session:</strong> {{ report.academic_session }}</p>
+        </div>
+    </div>
+
+    <div class="student-data-grid">
+        <div class="data-item">
+            <div class="data-label">Student Name</div>
+            <div class="data-value">{{ report.student.user.get_full_name }}</div>
+        </div>
+        <div class="data-item">
+            <div class="data-label">Grade / Class</div>
+            <div class="data-value">{{ report.student.grade_level }}</div>
+        </div>
+        <div class="data-item">
+            <div class="data-label">Assessment Term</div>
+            <div class="data-value">{{ report.term }}</div>
+        </div>
+        <div class="data-item">
+            <div class="data-label">Attendance</div>
+            <div class="data-value">{{ report.attendance_percentage }}%</div>
+        </div>
+    </div>
+
+    <table class="performance-table">
+        <thead>
+            <tr>
+                <th width="40%">Subject Name</th>
+                <th width="20%">Marks Obtained</th>
+                <th width="20%">Total Marks</th>
+                <th width="20%">Grade</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for subject, data in grades.items %}
+            <tr>
+                <td>{{ subject }}</td>
+                <td>{{ data.marks }}</td>
+                <td>{{ data.total }}</td>
+                <td><strong>{{ data.grade }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="summary-section">
+        <div class="percentage-box">
+            <div class="percentage-value">{{ report.total_percentage }}%</div>
+            <div class="percentage-label">Aggregate Score</div>
+        </div>
+        <div class="remarks-box">
+            <div class="remarks-title">Principal & Teacher Remarks</div>
+            <p>{{ report.remarks }}</p>
+        </div>
+    </div>
+
+    <div class="signatures">
+        <div class="sig-line">Class Teacher<br><small>{{ report.teacher.user.get_full_name }}</small></div>
+        <div class="sig-line">Institutional Head</div>
+        <div class="sig-line">Parent / Guardian</div>
+    </div>
+</div>
+{% endblock %}

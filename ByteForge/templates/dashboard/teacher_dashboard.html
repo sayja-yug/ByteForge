@@ -1,0 +1,710 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Teacher Dashboard - SmartShiksha{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="container">
+        <div class="dashboard-header fadeInUp">
+            <h1>Welcome, {{ user.first_name }}! 👨‍🏫</h1>
+            <p>Manage your classes and track student progress</p>
+        </div>
+
+        <!-- Teacher Stats -->
+        <div class="stats-grid-teacher reveal-hidden">
+            <div class="stat-card-teacher">
+                <div class="stat-icon">👥</div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ total_students }}</div>
+                    <div class="stat-label">Total Students</div>
+                </div>
+            </div>
+            <div class="stat-card-teacher">
+                <div class="stat-icon">📊</div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ class_avg|floatformat:1 }}%</div>
+                    <div class="stat-label">Class Average</div>
+                </div>
+            </div>
+            <div class="stat-card-teacher">
+                <div class="stat-icon">⚠️</div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ struggling_students|length }}</div>
+                    <div class="stat-label">Need Attention</div>
+                </div>
+            </div>
+            <div class="stat-card-teacher">
+                <div class="stat-icon">⭐</div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ top_performers|length }}</div>
+                    <div class="stat-label">Top Performers</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Struggling Students -->
+            <div class="dashboard-card reveal-hidden">
+                <h3>⚠️ Students Needing Attention</h3>
+                {% if struggling_students %}
+                <div class="student-list">
+                    {% for item in struggling_students %}
+                    <div class="student-item struggling">
+                        <div class="student-info">
+                            <strong>{{ item.student.user.get_full_name }}</strong>
+                            <p>{{ item.student.grade_level }}</p>
+                        </div>
+                        <div class="student-score">{{ item.avg_score|floatformat:1 }}%</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="info-text">All students are performing well! 🎉</p>
+                {% endif %}
+            </div>
+
+            <!-- Top Performers -->
+            <div class="dashboard-card reveal-hidden">
+                <h3>⭐ Top Performers</h3>
+                {% if top_performers %}
+                <div class="student-list">
+                    {% for item in top_performers %}
+                    <div class="student-item top-performer">
+                        <div class="student-info">
+                            <strong>{{ item.student.user.get_full_name }}</strong>
+                            <p>{{ item.student.grade_level }}</p>
+                        </div>
+                        <div class="student-score">{{ item.avg_score|floatformat:1 }}%</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="info-text">No top performers yet.</p>
+                {% endif %}
+            </div>
+
+            <!-- Class Performance Trend -->
+            <div class="dashboard-card full-width reveal-hidden">
+                <div class="section-header-flex">
+                    <h3>📈 Class Performance Analytics</h3>
+                    <div class="ai-badge">
+                        <span class="ai-icon">🧬</span>
+                        <span>AI Cognitive Insights</span>
+                    </div>
+                </div>
+                <div class="chart-container-main">
+                    <canvas id="classTrendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Quiz Attempts -->
+            <div class="dashboard-card full-width reveal-hidden">
+                <h3>📝 Recent Quiz Attempts</h3>
+                {% if recent_attempts %}
+                <div class="attempts-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student</th>
+                                <th>Assessment</th>
+                                <th>Score</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for attempt in recent_attempts %}
+                            <tr>
+                                <td>{{ attempt.student.user.get_full_name }}</td>
+                                <td>{{ attempt.assessment.title }}</td>
+                                <td>
+                                    <span
+                                        class="score-badge {% if attempt.percentage >= 80 %}score-high{% elif attempt.percentage >= 60 %}score-medium{% else %}score-low{% endif %}">
+                                        {{ attempt.percentage|floatformat:0 }}%
+                                    </span>
+                                </td>
+                                <td>{{ attempt.get_status_display }}</td>
+                                <td>{{ attempt.started_at|date:"M d, Y" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="info-text">No quiz attempts yet.</p>
+                {% endif %}
+            </div>
+
+            <!-- All Students List -->
+            <div class="dashboard-card full-width reveal-hidden">
+                <h3>👨‍🎓 Student List</h3>
+                {% if all_students %}
+                <div class="students-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Student Name</th>
+                                <th>Email</th>
+                                <th>Grade Level</th>
+                                <th>Learning Style</th>
+                                <th>Avg Performance</th>
+                                <th>Assessments</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in all_students %}
+                            <tr
+                                class="student-row {% if item.avg_score >= 80 %}high-performer{% elif item.avg_score < 60 %}struggling{% endif %} interact-row">
+                                <td><strong>{{ item.student.user.get_full_name }}</strong></td>
+                                <td>{{ item.student.user.email }}</td>
+                                <td>{{ item.student.grade_level }}</td>
+                                <td>{{ item.student.get_learning_style_display }}</td>
+                                <td>
+                                    {% if item.performance_count > 0 %}
+                                    <span
+                                        class="score-badge {% if item.avg_score >= 80 %}score-high{% elif item.avg_score >= 60 %}score-medium{% else %}score-low{% endif %}">
+                                        {{ item.avg_score|floatformat:1 }}%
+                                    </span>
+                                    {% else %}
+                                    <span class="score-badge score-neutral">No data</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ item.performance_count }}</td>
+                                <td>
+                                    {% if item.avg_score >= 80 %}
+                                    <span class="status-badge success">⭐ Excellent</span>
+                                    {% elif item.avg_score >= 60 %}
+                                    <span class="status-badge warning">📊 Good</span>
+                                    {% elif item.performance_count > 0 %}
+                                    <span class="status-badge danger">⚠️ Needs Help</span>
+                                    {% else %}
+                                    <span class="status-badge neutral">📝 New</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'analytics:issue_report_card' item.student.id %}"
+                                        class="btn btn-outline btn-sm"
+                                        style="padding: 4px 10px; font-size: 0.7rem; border-color: #A1927E; color: #A1927E;">
+                                        <i class="fas fa-file-invoice"></i> Issue Report
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="info-text">No students enrolled yet.</p>
+                {% endif %}
+            </div>
+
+            <!-- Content Impact & Reach -->
+            <div class="dashboard-card full-width reveal-hidden">
+                <div class="section-header-flex">
+                    <h3>📈 Content Impact & Reach</h3>
+                    <div class="reach-badge">
+                        <span class="reach-icon">👁️</span>
+                        <span class="reach-value">{{ total_resource_views }}</span>
+                        <span class="reach-label">Total Views</span>
+                    </div>
+                </div>
+
+                <div class="analytics-row">
+                    <!-- Top Resource -->
+                    <div class="analytics-card highlight">
+                        <div class="analytic-label">Most Popular Resource</div>
+                        {% if top_resource %}
+                        <div class="analytic-main">
+                            <span class="analytic-icon">
+                                {% if top_resource.resource_type == 'video' %}📹
+                                {% elif top_resource.resource_type == 'pdf' %}📕
+                                {% else %}📄{% endif %}
+                            </span>
+                            <div class="analytic-title">{{ top_resource.title }}</div>
+                        </div>
+                        <div class="analytic-footer">{{ top_resource.view_count }} students viewed</div>
+                        {% else %}
+                        <p class="placeholder-small">No resources added yet.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Top Assignment -->
+                    <div class="analytics-card highlight">
+                        <div class="analytic-label">Top Performing Assignment</div>
+                        {% if top_assignment %}
+                        <div class="analytic-main">
+                            <span class="analytic-icon">🎯</span>
+                            <div class="analytic-title">{{ top_assignment.assignment.title }}</div>
+                        </div>
+                        <div class="analytic-footer">Avg Score: {{ top_assignment.avg_score|floatformat:1 }}% ({{
+                            top_assignment.total_completions }} attempts)</div>
+                        {% else %}
+                        <p class="placeholder-small">No assignments completed yet.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Detailed Assignment Stats -->
+                {% if assignment_stats %}
+                <div class="mini-table-container">
+                    <table class="mini-table">
+                        <thead>
+                            <tr>
+                                <th>Assignment Name</th>
+                                <th>Topic</th>
+                                <th>Total Attempts</th>
+                                <th>Avg. Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in assignment_stats %}
+                            <tr>
+                                <td>{{ stat.assignment.title }}</td>
+                                <td>{{ stat.assignment.topic.name }}</td>
+                                <td>{{ stat.total_completions }}</td>
+                                <td>
+                                    <div class="score-progress-flex">
+                                        <div class="mini-progress">
+                                            <div class="mini-fill" style="width: {{ stat.avg_score }}%"></div>
+                                        </div>
+                                        <span class="score-text">{{ stat.avg_score|floatformat:1 }}%</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="dashboard-card full-width reveal-hidden">
+                <h3>⚡ Quick Actions</h3>
+                <div class="action-buttons">
+                    <a href="{% url 'learning:create_subject' %}" class="btn btn-primary"
+                        style="background: linear-gradient(135deg, #A1927E 0%, #B3A697 100%); border: none;">
+                        ➕ Add Subject
+                    </a>
+                    <a href="{% url 'learning:create_topic' %}" class="btn btn-primary"
+                        style="background: linear-gradient(135deg, #B3A697 0%, #8E8271 100%); border: none;">
+                        📝 Add Topic
+                    </a>
+                    <a href="{% url 'assessments:create_assignment' %}" class="btn btn-primary">
+                        ✏️ Create Assignment
+                    </a>
+                    <a href="{% url 'assessments:teacher_assignments' %}" class="btn btn-secondary">
+                        📚 My Assignments
+                    </a>
+                    <a href="{% url 'learning:create_resource' %}" class="btn btn-outline">
+                        📖 Add Resource
+                    </a>
+                    <a href="{% url 'learning:teacher_resources' %}" class="btn btn-outline">
+                        📚 My Resources
+                    </a>
+                    <a href="/admin/analytics/teacherintervention/add/" class="btn btn-outline">
+                        🤝 Log Intervention
+                    </a>
+                </div>
+            </div>
+
+            <!-- Teacher Profile -->
+            <div class="dashboard-card reveal-hidden">
+                <h3>👤 Your Profile</h3>
+                <div class="profile-info">
+                    <div class="profile-item">
+                        <strong>Specialization:</strong> {{ teacher.specialization|join:", " }}
+                    </div>
+                    <div class="profile-item">
+                        <strong>Experience:</strong> {{ teacher.experience_years }} years
+                    </div>
+                    <div class="profile-item">
+                        <strong>Qualification:</strong> {{ teacher.qualification }}
+                    </div>
+                    <div class="profile-item">
+                        <strong>Verified:</strong>
+                        {% if teacher.is_verified_teacher %}
+                        <span class="verified-badge">✓ Verified</span>
+                        {% else %}
+                        <span class="pending-badge">⏳ Pending</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --card-bg: rgba(255, 255, 255, 0.95);
+        --glass-bg: rgba(255, 255, 255, 0.8);
+        --glass-border: rgba(255, 255, 255, 0.4);
+    }
+
+    .dashboard-card {
+        background: var(--card-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        box-shadow: 0 8px 32px rgba(161, 146, 126, 0.05);
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+        border-radius: var(--radius-lg);
+    }
+
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(161, 146, 126, 0.1);
+    }
+
+    .stats-grid-teacher {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .stat-card-teacher {
+        background: white;
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        transition: all 0.3s ease;
+        border: 1px solid var(--border);
+    }
+
+    .stat-card-teacher:hover {
+        transform: scale(1.03);
+        border-color: var(--primary);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+    }
+
+    .stat-card-teacher .stat-icon {
+        font-size: 2.2rem;
+        width: 60px;
+        height: 60px;
+        background: #f8fafc;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .stat-card-teacher:hover .stat-icon {
+        background: var(--primary);
+        color: white;
+        transform: rotate(-5deg);
+    }
+
+    .stat-card-teacher .stat-value {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: #5F5B55;
+        line-height: 1;
+    }
+
+    .stat-card-teacher .stat-label {
+        font-size: 0.8rem;
+        color: var(--text-light);
+        text-transform: uppercase;
+        font-weight: 700;
+        margin-top: 0.2rem;
+    }
+
+    .student-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .student-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-md);
+        border-radius: var(--radius-md);
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+    }
+
+    .student-item:hover {
+        transform: translateX(5px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .student-item.struggling {
+        background: #fff5f5;
+        border-left: 5px solid #ef4444;
+        border-color: #fee2e2;
+    }
+
+    .student-item.top-performer {
+        background: #f0fdf4;
+        border-left: 5px solid #10b981;
+        border-color: #d1fae5;
+    }
+
+    .student-info strong {
+        display: block;
+        margin-bottom: 0.25rem;
+        color: #5F5B55;
+    }
+
+    .student-info p {
+        font-size: 0.8rem;
+        color: var(--text-light);
+        margin: 0;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .student-score {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: #5F5B55;
+    }
+
+    .attempts-table table,
+    .students-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .attempts-table th,
+    .students-table th,
+    .mini-table th {
+        background: #f8fafc;
+        padding: 1.25rem;
+        text-align: left;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .attempts-table td,
+    .students-table td,
+    .mini-table td {
+        padding: 1.25rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .interact-row {
+        transition: all 0.2s ease;
+    }
+
+    .interact-row:hover {
+        background-color: #f8fafc;
+        cursor: pointer;
+    }
+
+    .score-badge {
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+    }
+
+    .score-high {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .score-medium {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .score-low {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .status-badge {
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .status-badge.success {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .status-badge.warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-badge.danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .reach-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: white;
+        padding: 0.6rem 1.2rem;
+        border-radius: 50px;
+        border: 2px solid #f1f5f9;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+    }
+
+    .reach-value {
+        font-weight: 800;
+        color: var(--primary);
+        font-size: 1.2rem;
+    }
+
+    .analytics-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .analytics-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .analytics-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--primary);
+    }
+
+    .analytics-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    .analytic-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        font-weight: 800;
+        color: #94a3b8;
+        margin-bottom: 1rem;
+    }
+
+    .analytic-title {
+        font-weight: 700;
+        color: #5F5B55;
+        font-size: 1.1rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-md);
+    }
+
+    .action-buttons .btn {
+        padding: 0.8rem 1.5rem;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-weight: 600;
+    }
+
+    .action-buttons .btn:hover {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .profile-item {
+        padding: 1rem;
+        background: #f8fafc;
+        border-radius: var(--radius-md);
+        margin-bottom: 0.75rem;
+        border-right: 4px solid var(--primary);
+    }
+
+    @media (max-width: 992px) {
+        .section-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<!-- Pass data to JS securely using JSON -->
+{{ class_trend|json_script:"class-trend-json" }}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Load data from and parse the JSON script
+        const rawTrend = JSON.parse(document.getElementById('class-trend-json').textContent) || [];
+
+        const trendData = rawTrend.map(item => ({
+            x: item.date,
+            y: parseFloat(item.score) || 0
+        }));
+
+        const ctx = document.getElementById('classTrendChart').getContext('2d');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                datasets: [{
+                    label: 'Class Average Performance (%)',
+                    data: trendData,
+                    backgroundColor: 'rgba(161, 146, 126, 0.2)',
+                    borderColor: '#A1927E',
+                    borderWidth: 2,
+                    borderRadius: 8,
+                    barThickness: 30
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        titleColor: '#5F5B55',
+                        bodyColor: '#5F5B55',
+                        borderColor: '#e2e8f0',
+                        borderWidth: 1,
+                        padding: 12
+                    }
+                }
+            }
+        });
+    });
+</script>
+
+{% endblock %}

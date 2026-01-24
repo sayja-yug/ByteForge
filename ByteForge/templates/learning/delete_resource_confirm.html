@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Delete Resource - SmartShiksha{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 600px; margin: 4rem auto;">
+    <div class="confirm-card">
+        <div class="warning-icon">⚠️</div>
+        <h2>Delete Resource?</h2>
+        <p>Are you sure you want to delete <strong>"{{ resource.title }}"</strong>?</p>
+        <p class="warning-text">This action will permanently remove the resource and all student interaction data
+            related to it.</p>
+
+        <form method="post" class="confirm-form">
+            {% csrf_token %}
+            <div class="button-group">
+                <a href="{% url 'learning:teacher_resources' %}" class="btn btn-outline">Cancel</a>
+                <button type="submit" class="btn btn-danger">Delete Resource</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .confirm-card {
+        background: var(--surface);
+        padding: 3rem;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-lg);
+        text-align: center;
+    }
+
+    .warning-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+
+    .warning-text {
+        color: var(--error);
+        font-weight: 500;
+        margin-bottom: 2rem;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+
+    .btn-danger {
+        background: var(--error);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-danger:hover {
+        background: #dc2626;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+</style>
+{% endblock %}

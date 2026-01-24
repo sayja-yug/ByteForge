@@ -1,0 +1,294 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}AI Recommendations - SmartShiksha{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="{% url 'accounts:student_dashboard' %}">Dashboard</a>
+            <span>/</span>
+            <span>AI Recommendations</span>
+        </div>
+
+        <div class="recommendations-header">
+            <h1>🤖 AI Recommendations for You</h1>
+            <p>Personalized learning suggestions based on your performance and goals</p>
+        </div>
+
+        {% if recommendations %}
+        <div class="recommendations-container">
+            {% for rec in recommendations %}
+            <div class="recommendation-card priority-{{ rec.priority }}">
+                <div class="rec-header">
+                    <div>
+                        <h3>{{ rec.title }}</h3>
+                        <span class="rec-type badge badge-{{ rec.recommendation_type }}">{{ rec.get_recommendation_type_display }}</span>
+                    </div>
+                    <span class="priority-badge priority-{{ rec.priority }}">{{ rec.get_priority_display }}</span>
+                </div>
+
+                <p class="rec-description">{{ rec.description }}</p>
+
+                <!-- Explainable AI Section -->
+                <div class="rec-explanation">
+                    <details>
+                        <summary>💡 Why this recommendation?</summary>
+                        <p class="explanation-text">{{ rec.reason }}</p>
+                        {% if rec.reasoning_factors %}
+                        <div class="reasoning-factors">
+                            <strong>Data points used:</strong>
+                            <ul>
+                                {% for key, value in rec.reasoning_factors.items %}
+                                <li><strong>{{ key|title }}:</strong> {{ value }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </details>
+                </div>
+
+                <div class="rec-footer">
+                    {% if rec.resource %}
+                    <a href="{% url 'learning:resource_detail' rec.resource.id %}" class="btn btn-sm btn-primary">
+                        📚 View Resource
+                    </a>
+                    {% elif rec.topic %}
+                    <a href="{% url 'learning:topic_detail' rec.topic.id %}" class="btn btn-sm btn-primary">
+                        🎓 Start Learning
+                    </a>
+                    {% endif %}
+
+                    <form method="post" action="{% url 'recommendations:feedback' rec.id %}" class="feedback-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="helpful" value="yes">
+                        <button type="submit" class="btn btn-sm btn-outline" title="Was this recommendation helpful?">
+                            👍 Helpful
+                        </button>
+                    </form>
+                </div>
+
+                {% if rec.is_acted_upon %}
+                <div class="rec-status">
+                    ✓ You started this recommendation
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <h3>No recommendations yet</h3>
+            <p>Complete some learning activities and assessments to get personalized recommendations!</p>
+            <a href="{% url 'learning:browse_subjects' %}" class="btn btn-primary">
+                Start Learning
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .recommendations-header {
+        margin-bottom: var(--spacing-xl);
+        text-align: center;
+    }
+
+    .recommendations-header h1 {
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .recommendations-header p {
+        color: var(--text-light);
+        font-size: 1.1rem;
+    }
+
+    .recommendations-container {
+        display: grid;
+        gap: var(--spacing-lg);
+    }
+
+    .recommendation-card {
+        background: var(--surface);
+        border-left: 4px solid var(--primary);
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+    }
+
+    .recommendation-card.priority-urgent {
+        border-left-color: #ef4444;
+        background: linear-gradient(to right, rgba(239, 68, 68, 0.05), var(--surface));
+    }
+
+    .recommendation-card.priority-high {
+        border-left-color: #f59e0b;
+        background: linear-gradient(to right, rgba(245, 158, 11, 0.05), var(--surface));
+    }
+
+    .recommendation-card.priority-medium {
+        border-left-color: #3b82f6;
+    }
+
+    .recommendation-card.priority-low {
+        border-left-color: #10b981;
+    }
+
+    .rec-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: var(--spacing-md);
+        gap: var(--spacing-md);
+    }
+
+    .rec-header h3 {
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .rec-type {
+        display: inline-block;
+        margin-top: var(--spacing-xs);
+    }
+
+    .rec-description {
+        color: var(--text-light);
+        margin-bottom: var(--spacing-md);
+        line-height: 1.6;
+    }
+
+    .rec-explanation {
+        margin: var(--spacing-md) 0;
+        padding: var(--spacing-md);
+        background: var(--bg);
+        border-radius: var(--radius-md);
+    }
+
+    .rec-explanation summary {
+        cursor: pointer;
+        font-weight: 600;
+        user-select: none;
+    }
+
+    .rec-explanation summary:hover {
+        color: var(--primary);
+    }
+
+    .explanation-text {
+        margin-top: var(--spacing-md);
+        color: var(--text-light);
+    }
+
+    .reasoning-factors {
+        margin-top: var(--spacing-md);
+    }
+
+    .reasoning-factors ul {
+        list-style: none;
+        padding-left: var(--spacing-md);
+        margin-top: var(--spacing-sm);
+    }
+
+    .reasoning-factors li {
+        padding: var(--spacing-xs) 0;
+        color: var(--text-light);
+    }
+
+    .rec-footer {
+        display: flex;
+        gap: var(--spacing-md);
+        align-items: center;
+        margin-top: var(--spacing-md);
+        padding-top: var(--spacing-md);
+        border-top: 1px solid var(--border);
+    }
+
+    .feedback-form {
+        margin-left: auto;
+    }
+
+    .rec-status {
+        margin-top: var(--spacing-sm);
+        padding: var(--spacing-sm) var(--spacing-md);
+        background: #d1fae5;
+        color: #065f46;
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .priority-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--radius-md);
+        font-size: 0.75rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .priority-urgent {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .priority-high {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .priority-medium {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .priority-low {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .badge-resource {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .badge-topic {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .badge-revision {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-practice {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .badge-project {
+        background: #ede9fe;
+        color: #6b21a8;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: var(--spacing-3xl);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .empty-state h3 {
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .empty-state p {
+        color: var(--text-light);
+        margin-bottom: var(--spacing-lg);
+    }
+</style>
+{% endblock %}

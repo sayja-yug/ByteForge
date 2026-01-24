@@ -1,0 +1,689 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Student Dashboard - SmartShiksha{% endblock %}
+
+{% block extra_js %}
+<!-- Pass data from Django to JS safely -->
+{{ accuracy_trend|json_script:"accuracy-data-json" }}
+{{ predicted_trend|json_script:"predicted-data-json" }}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // 1. Accuracy & Prediction Chart
+        const ctx = document.getElementById('accuracyChart');
+        if (ctx) {
+            const rawAccuracy = JSON.parse(document.getElementById('accuracy-data-json').textContent) || [];
+            const rawPredicted = JSON.parse(document.getElementById('predicted-data-json').textContent) || [];
+
+            const labels = rawAccuracy.map(item => item.date).reverse();
+            const accuracyData = rawAccuracy.map(item => parseFloat(item.score) || 0).reverse();
+            const predictedData = rawPredicted.map(item => parseFloat(item.score) || 0);
+
+            // Generate labels for predictions
+            const predictedLabels = predictedData.map((_, i) => `Next ${i + 1}`);
+
+            // Combine labels and data for a seamless chart transition
+            const allLabels = [...labels, ...predictedLabels];
+            const displayAccuracy = [...accuracyData, ...Array(predictedData.length).fill(null)];
+
+            // Connect real data to predicted data visually
+            const displayPrediction = [...Array(accuracyData.length - 1).fill(null),
+            accuracyData[accuracyData.length - 1] || null,
+            ...predictedData];
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: allLabels,
+                    datasets: [
+                        {
+                            label: 'Real Performance %',
+                            data: displayAccuracy,
+                            borderColor: '#A1927E',
+                            backgroundColor: 'rgba(161, 146, 126, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 6,
+                            pointBackgroundColor: '#fff',
+                            pointBorderWidth: 3,
+                            borderWidth: 4
+                        },
+                        {
+                            label: 'AI Forecast %',
+                            data: displayPrediction,
+                            borderColor: '#B3A697',
+                            borderDash: [5, 5],
+                            backgroundColor: 'transparent',
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#B3A697'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { usePointStyle: true, font: { weight: '600' } } },
+                        tooltip: { backgroundColor: '#5F5B55', titleColor: '#fff', bodyColor: '#fff', padding: 12 }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: { color: '#f1f5f9' },
+                            ticks: { font: { weight: '600' } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { weight: '600' } }
+                        }
+                    },
+                    interaction: { intersect: false, mode: 'index' }
+                }
+            });
+        }
+
+        // 2. Interactive Card Hover Effects
+        const cards = document.querySelectorAll('.dashboard-card, .recommendation-card, .learning-path-card, .metric-card');
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            });
+        });
+
+        // 3. Progress Bar Rise Animation
+        const fills = document.querySelectorAll('.mini-progress-fill');
+        fills.forEach(fill => {
+            const finalWidth = fill.style.width;
+            fill.style.width = '0';
+            setTimeout(() => {
+                fill.style.transition = 'width 1.5s ease-in-out';
+                fill.style.width = finalWidth;
+            }, 300);
+        });
+
+        // 4. Achievement "Pop" for High Scores
+        const scoreBadges = document.querySelectorAll('.score-badge, .stat-value');
+        scoreBadges.forEach(badge => {
+            const val = parseFloat(badge.textContent);
+            if (val >= 90) {
+                badge.innerHTML += ' 🚀';
+                badge.style.textShadow = '0 0 10px rgba(16, 185, 129, 0.3)';
+            }
+        });
+
+        // 5. Typing Animation for Welcome Title
+        const welcomeText = document.querySelector('.dashboard-header h1');
+        if (welcomeText) {
+            const originalText = welcomeText.innerText;
+            welcomeText.innerText = '';
+            let i = 0;
+            const typing = setInterval(() => {
+                if (i < originalText.length) {
+                    welcomeText.innerText += originalText.charAt(i);
+                    i++;
+                } else {
+                    clearInterval(typing);
+                }
+            }, 40);
+        }
+
+        // 6. Number Counter for Metrics
+        const statValues = document.querySelectorAll('.stat-value');
+        statValues.forEach(stat => {
+            const target = parseInt(stat.innerText.replace(/[^0-9]/g, '')) || 0;
+            if (target > 0) {
+                let current = 0;
+                const duration = 2000;
+                const stepTime = 30;
+                const increment = Math.ceil(target / (duration / stepTime));
+                const counter = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        stat.innerText = stat.innerText.includes('Level') ? `Level ${target}` : target;
+                        clearInterval(counter);
+                    } else {
+                        stat.innerText = stat.innerText.includes('Level') ? `Level ${current}` : current;
+                    }
+                }, stepTime);
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="container">
+        <div class="dashboard-header fadeInUp">
+            <h1>Welcome back, {{ user.first_name }}! 🎓</h1>
+            <p>Your personalized learning dashboard</p>
+        </div>
+
+        <!-- Gamification Stats -->
+        <div class="gamification-banner">
+            <div class="gamification-stat">
+                <span class="stat-icon">🔥</span>
+                <div>
+                    <div class="stat-value">{{ student.current_streak }}</div>
+                    <div class="stat-label">Day Streak</div>
+                </div>
+            </div>
+            <div class="gamification-stat">
+                <span class="stat-icon">⭐</span>
+                <div>
+                    <div class="stat-value">{{ gamification.total_xp }}</div>
+                    <div class="stat-label">Total XP</div>
+                </div>
+            </div>
+            <div class="gamification-stat">
+                <span class="stat-icon">🏆</span>
+                <div>
+                    <div class="stat-value">Level {{ gamification.current_level }}</div>
+                    <div class="stat-label">Current Level</div>
+                </div>
+            </div>
+            <div class="gamification-stat success-probability">
+                <span class="stat-icon">🧬</span>
+                <div>
+                    <div class="stat-value">{{ success_probability|floatformat:1 }}%</div>
+                    <div class="stat-label">Success AI Prob.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Motivation Section -->
+            <div class="dashboard-card full-width motivation-banner">
+                <div class="motivation-content">
+                    <div class="motivation-message">
+                        <h3>{{ motivational_message }}</h3>
+                    </div>
+                    <div class="daily-tip">
+                        <p>{{ daily_tip }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Next Action Card -->
+            <div class="dashboard-card full-width">
+                <h3>🎯 What's Next?</h3>
+                <div class="next-action-card priority-{{ next_action.priority }}">
+                    <div class="action-header">
+                        <h4>{{ next_action.message }}</h4>
+                        <span class="priority-badge">{{ next_action.priority|title }}</span>
+                    </div>
+                    {% if next_action.topic %}
+                    <a href="{% url 'learning:topic_detail' next_action.topic.id %}" class="btn btn-primary">Start Now
+                        →</a>
+                    {% else %}
+                    <a href="{% url 'learning:browse_subjects' %}" class="btn btn-primary">Explore Subjects →</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Analytics Overview -->
+            <div class="dashboard-card full-width">
+                <div class="section-header-flex">
+                    <h3>📊 Your Performance Overview</h3>
+                    {% if accuracy_trend %}
+                    <div class="ai-badge">
+                        <span class="ai-icon">🧠</span>
+                        <span>AI Prediction Active</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="analytics-layout">
+                    <div class="improvement-metrics">
+                        <div class="metric-card">
+                            <div class="metric-label">Overall Growth</div>
+                            <div
+                                class="metric-value {% if improvement_metrics.overall_improvement >= 0 %}positive{% else %}negative{% endif %}">
+                                {{ improvement_metrics.overall_improvement|floatformat:2 }}%
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Average Score</div>
+                            <div class="metric-value">{{ improvement_metrics.average_score|floatformat:2 }}%</div>
+                        </div>
+                        <div class="metric-card highlight">
+                            <div class="metric-label">Highest Score</div>
+                            <div class="metric-value" style="color: #10b981;">
+                                {{improvement_metrics.highest_score|floatformat:2 }}%</div>
+                        </div>
+                        {% if predicted_trend %}
+                        <div class="metric-card predictive">
+                            <div class="metric-label">AI Predicted Score</div>
+                            <div class="metric-value">{{ predicted_trend.0.score|floatformat:1 }}%</div>
+                            <div class="prediction-tag" style="color: #A1927E;">Next Topic Potential</div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="chart-container-main">
+                        <canvas id="accuracyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="dashboard-card">
+                <h3>⚡ Quick Access</h3>
+                <div class="action-buttons-student" style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <a href="{% url 'analytics:my_reports' %}" class="btn btn-primary"
+                        style="background: linear-gradient(135deg, #A1927E 0%, #B3A697 100%); border: none; padding: 12px 20px; border-radius: 10px; font-weight: 700; color: white; text-decoration: none; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-file-invoice"></i> View Report Cards
+                    </a>
+                    <a href="{% url 'learning:browse_subjects' %}" class="btn btn-outline"
+                        style="padding: 12px 20px; border-radius: 10px; font-weight: 700; text-decoration: none; color: #475569; border: 2px solid #e2e8f0; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-book-open"></i> Browse Subjects
+                    </a>
+                </div>
+            </div>
+
+            <!-- Topic Progress Table -->
+            <div class="dashboard-card full-width">
+                <h3>📚 Detailed Topic Progress</h3>
+                {% if topic_progress %}
+                <div class="topic-progress-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Topic</th>
+                                <th>Status</th>
+                                <th>Avg Score</th>
+                                <th>Progress</th>
+                                <th>Last Activity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for topic in topic_progress %}
+                            <tr class="topic-row interact-row">
+                                <td><strong>{{ topic.topic.name }}</strong></td>
+                                <td>
+                                    {% if topic.status == 'mastered' %}
+                                    <span class="status-badge success">✓ Mastered</span>
+                                    {% elif topic.status == 'learning' %}
+                                    <span class="status-badge warning">📚 Learning</span>
+                                    {% elif topic.status == 'struggling' %}
+                                    <span class="status-badge danger">⚠️ Struggling</span>
+                                    {% else %}
+                                    <span class="status-badge neutral">📝 Started</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ topic.avg_score|floatformat:1 }}%</td>
+                                <td>
+                                    <div class="mini-progress-bar">
+                                        <div class="mini-progress-fill"
+                                            style="width: {{ topic.completion_percentage }}%"></div>
+                                    </div>
+                                    <span class="progress-percent">{{topic.completion_percentage|floatformat:0}}%</span>
+                                </td>
+                                <td>{{ topic.last_attempted|date:"M d"|default:"-" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="info-text">No activity yet. Your personalized stats will appear here as you learn.</p>
+                {% endif %}
+            </div>
+
+            <!-- Strengths & Weaknesses Split -->
+            <div class="dashboard-card">
+                <h3>🏆 Your Strengths</h3>
+                {% if strengths %}
+                <ul class="topic-list">
+                    {% for strength in strengths %}
+                    <li class="topic-item strength">
+                        <span class="topic-name">{{ strength.topic }}</span>
+                        <span class="topic-score">{{ strength.score|floatformat:1 }}%</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="info-text">Complete more quizzes to identify your top areas.</p>
+                {% endif %}
+            </div>
+
+            <div class="dashboard-card">
+                <h3>📈 Growth Opportunities</h3>
+                {% if weaknesses %}
+                <ul class="topic-list">
+                    {% for weakness in weaknesses %}
+                    <li class="topic-item weakness">
+                        <span class="topic-name">{{ weakness.topic }}</span>
+                        <span class="topic-score">{{ weakness.score|floatformat:1 }}%</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="info-text">Keep it up! No major weak spots detected.</p>
+                {% endif %}
+            </div>
+
+            <!-- Learning Paths -->
+            {% if learning_paths %}
+            <div class="dashboard-card full-width">
+                <h3>🗺️ Your Active Learning Paths</h3>
+                <div class="learning-paths-grid">
+                    {% for path in learning_paths %}
+                    <div class="learning-path-card">
+                        <h4>{{ path.name }}</h4>
+                        <div class="path-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: {{ path.progress_percentage }}%"></div>
+                            </div>
+                            <span class="progress-text">{{ path.progress_percentage }}% Mastery</span>
+                        </div>
+                        <p class="path-status">{{ path.get_status_display }}</p>
+                        <a href="{% url 'recommendations:path_detail' path.id %}"
+                            class="btn btn-sm btn-outline">Continue Journey</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Recent Activity Log -->
+            <div class="dashboard-card full-width">
+                <h3>🕒 Recent Activity</h3>
+                {% if recent_activities %}
+                <div class="activity-list">
+                    {% for activity in recent_activities %}
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            {% if activity.resource.resource_type == 'video' %}📹
+                            {% elif activity.resource.resource_type == 'article' %}📄
+                            {% elif activity.resource.resource_type == 'quiz' %}✏️
+                            {% else %}📚{% endif %}
+                        </div>
+                        <div class="activity-details">
+                            <strong>{{ activity.resource.title }}</strong>
+                            <p>{{ activity.get_status_display }} • {{ activity.time_spent_minutes }}m •
+                                {{activity.started_at|date:"M d" }}</p>
+                        </div>
+                        <div class="activity-progress">{{ activity.progress_percentage }}%</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="placeholder-text">Your recent lessons will be listed here.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Premium Dashboard Styles */
+    .section-header-flex {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .analytics-layout {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 2rem;
+    }
+
+    .chart-container-main {
+        height: 380px;
+        position: relative;
+        background: #fff;
+        border-radius: 15px;
+        padding: 15px;
+        border: 1px solid #f1f5f9;
+    }
+
+    .ai-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: #f8fafc;
+        color: #A1927E;
+        padding: 0.6rem 1.2rem;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        border: 1px solid #C5BAAD;
+        animation: pulse-soft 2s infinite;
+    }
+
+    @keyframes pulse-soft {
+        0% {
+            box-shadow: 0 0 0 0 rgba(161, 146, 126, 0.4);
+        }
+
+        70% {
+            box-shadow: 0 0 0 10px rgba(161, 146, 126, 0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(161, 146, 126, 0);
+        }
+    }
+
+    .gamification-banner {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .gamification-stat {
+        background: linear-gradient(135deg, #A1927E 0%, #B3A697 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .gamification-stat:hover {
+        transform: translateY(-5px);
+    }
+
+    .gamification-stat.success-probability {
+        background: linear-gradient(135deg, #B3A697 0%, #A1927E 100%);
+        box-shadow: 0 4px 15px rgba(161, 146, 126, 0.3);
+    }
+
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 800;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        opacity: 0.9;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.85);
+    }
+
+    .motivation-banner {
+        background: linear-gradient(135deg, #A1927E 0%, #B3A697 100%);
+        color: white;
+        padding: 3rem;
+        border-radius: 24px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .motivation-banner h3 {
+        font-size: 2.2rem;
+        font-weight: 800;
+        margin-bottom: 1.5rem;
+    }
+
+    .daily-tip {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        padding: 1.5rem;
+        border-radius: 15px;
+        border-left: 5px solid #fff;
+    }
+
+    .metric-card {
+        background: #fff;
+        padding: 1.5rem;
+        border-radius: 15px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 1rem;
+        text-align: left;
+        transition: all 0.3s ease;
+    }
+
+    .metric-card:hover {
+        border-color: #A1927E;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+    }
+
+    .metric-card.predictive {
+        background: #fdfaf6;
+        border-color: #C5BAAD;
+        color: #5F5B55;
+    }
+
+    .metric-value {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: #5F5B55;
+        margin-top: 5px;
+    }
+
+    .metric-label {
+        font-size: 0.85rem;
+        color: #64748b;
+        font-weight: 600;
+    }
+
+    .topic-progress-table {
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        overflow: hidden;
+        background: #fff;
+    }
+
+    .topic-progress-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .topic-progress-table th {
+        background: #f8fafc;
+        padding: 1rem;
+        text-align: left;
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: #475569;
+        text-transform: uppercase;
+    }
+
+    .topic-progress-table td {
+        padding: 1.25rem 1rem;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .status-badge {
+        padding: 0.4rem 0.8rem;
+        border-radius: 50px;
+        font-size: 0.7rem;
+        font-weight: 700;
+    }
+
+    .status-badge.success {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .status-badge.warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-badge.danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .mini-progress-bar {
+        height: 6px;
+        background: #f1f5f9;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 4px;
+    }
+
+    .mini-progress-fill {
+        height: 100%;
+        background: #A1927E;
+        border-radius: 10px;
+        width: 0;
+    }
+
+    .topic-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 0.75rem;
+    }
+
+    .topic-item.strength {
+        background: #f0fdf4;
+        border: 1px solid #bcf0da;
+    }
+
+    .topic-item.weakness {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 1.25rem;
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .activity-item:hover {
+        transform: translateX(5px);
+        border-color: #A1927E;
+    }
+
+    .activity-icon {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f1f5f9;
+        border-radius: 12px;
+        font-size: 1.5rem;
+    }
+
+    @media (max-width: 1024px) {
+        .analytics-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}

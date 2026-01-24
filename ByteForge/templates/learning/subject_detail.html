@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ subject.name }} - SmartShiksha{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="container">
+        <div class="subject-header"
+            style="background: linear-gradient(135deg, {{ subject.color_code }} 0%, {{ subject.color_code }} 100%)">
+            <div class="subject-header-content">
+                <div class="subject-icon-large">
+                    <i class="{{ subject.icon }}"></i>
+                </div>
+                <div>
+                    <h1>{{ subject.name }}</h1>
+                    <p>{{ subject.description }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="topics-section">
+            <h2>📖 Topics in {{ subject.name }}</h2>
+
+            <div class="topics-list">
+                {% for item in topics_with_progress %}
+                <div class="topic-card">
+                    <div class="topic-header">
+                        <div>
+                            <h3>
+                                <a href="{% url 'learning:topic_detail' item.topic.id %}">{{ item.topic.name }}</a>
+                            </h3>
+                            <p class="topic-description">{{ item.topic.description }}</p>
+                        </div>
+                        <div class="topic-badges">
+                            <span class="badge badge-{{ item.topic.difficulty_level }}">{{ item.topic.get_difficulty_level_display }}</span>
+                            <span class="badge">{{ item.topic.estimated_hours }}h</span>
+                            {% if item.teacher_resource_count %}
+                            <span class="badge badge-teacher">👨‍🏫 {{ item.teacher_resource_count }} Teacher
+                                Resources</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if item.score %}
+                    <div class="topic-progress">
+                        <div class="progress-info">
+                            <span>Your Progress</span>
+                            <span class="progress-score">{{ item.score|floatformat:0 }}%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: {{ item.score }}%"></div>
+                        </div>
+                        <span class="status-badge status-{{ item.status }}">
+                            {% if item.status == 'needs_work' %}Needs Work
+                            {% elif item.status == 'mastered' %}Mastered
+                            {% else %}{{ item.status|title }}{% endif %}
+                        </span>
+                    </div>
+                    {% endif %}
+
+                    <div class="topic-actions">
+                        <a href="{% url 'learning:topic_detail' item.topic.id %}" class="btn btn-sm btn-primary">
+                            {% if item.score %}Continue Learning{% else %}Start Learning{% endif %}
+                        </a>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="placeholder-text">No topics available yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .subject-header {
+        color: white;
+        padding: var(--spacing-xl);
+        border-radius: var(--radius-xl);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .subject-header-content {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-lg);
+    }
+
+    .subject-icon-large {
+        font-size: 5rem;
+    }
+
+    .subject-header h1 {
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .topics-section h2 {
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .topics-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+
+    .topic-card {
+        background: var(--surface);
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+    }
+
+    .topic-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: var(--spacing-md);
+    }
+
+    .topic-header h3 {
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .topic-header h3 a {
+        color: var(--text);
+        text-decoration: none;
+    }
+
+    .topic-header h3 a:hover {
+        color: var(--primary);
+    }
+
+    .topic-description {
+        color: var(--text-light);
+        font-size: 0.875rem;
+    }
+
+    .topic-badges {
+        display: flex;
+        gap: var(--spacing-xs);
+        flex-shrink: 0;
+    }
+
+    .badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--radius-md);
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .badge-beginner {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .badge-intermediate {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-advanced {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .topic-progress {
+        margin: var(--spacing-md) 0;
+        padding: var(--spacing-md);
+        background: var(--bg);
+        border-radius: var(--radius-md);
+    }
+
+    .progress-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: var(--spacing-xs);
+        font-size: 0.875rem;
+    }
+
+    .progress-score {
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .status-badge {
+        display: inline-block;
+        margin-top: var(--spacing-xs);
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-mastered {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-learning {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .status-needs_work {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .topic-actions {
+        margin-top: var(--spacing-md);
+    }
+
+    .badge-teacher {
+        background: #e0e7ff;
+        color: #4338ca;
+        border: 1px solid #c7d2fe;
+    }
+</style>
+{% endblock %}

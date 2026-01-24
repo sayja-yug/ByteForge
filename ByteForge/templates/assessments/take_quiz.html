@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Take Quiz: {{ assessment.title }} - SmartShiksha{% endblock %}
+
+{% block content %}
+<div class="quiz-page">
+    <div class="container">
+        <!-- Quiz Header -->
+        <div class="quiz-header">
+            <h1>{{ assessment.title }}</h1>
+            <p>{{ assessment.description }}</p>
+            <div class="quiz-meta">
+                <span class="badge badge-{{ assessment.difficulty }}">{{ assessment.get_difficulty_display }}</span>
+                <span>⏱️ {{ assessment.time_limit_minutes }} minutes</span>
+                <span>📊 {{ assessment.total_marks }} marks</span>
+                {% if assessment.created_by %}
+                <span class="instructor-tag">👨‍🏫 Instructor: {{ assessment.created_by.user.get_full_name|default:assessment.created_by.user.username }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quiz Form -->
+        <form method="post" action="{% url 'assessments:submit_quiz' assessment.id %}" class="quiz-form">
+            {% csrf_token %}
+
+            <div class="questions-container">
+                {% for question in questions %}
+                <div class="question-card">
+                    <div class="question-header">
+                        <span class="question-number">Question {{ forloop.counter }}</span>
+                        <span class="question-marks">{{ question.marks }} marks</span>
+                    </div>
+
+                    <div class="question-text">
+                        {{ question.question_text }}
+                    </div>
+
+                    {% if question.question_type == 'mcq' %}
+                    <div class="options-list">
+                        {% for option in question.options %}
+                        <label class="option-label">
+                            <input type="radio" name="question_{{ question.id }}" value="{{ forloop.counter0 }}"
+                                required>
+                            <span class="option-text">{{ option }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    {% elif question.question_type == 'true_false' %}
+                    <div class="options-list">
+                        <label class="option-label">
+                            <input type="radio" name="question_{{ question.id }}" value="true" required>
+                            <span class="option-text">True</span>
+                        </label>
+                        <label class="option-label">
+                            <input type="radio" name="question_{{ question.id }}" value="false" required>
+                            <span class="option-text">False</span>
+                        </label>
+                    </div>
+                    {% elif question.question_type == 'short_answer' %}
+                    <textarea name="question_{{ question.id }}" rows="3" class="short-answer" required></textarea>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="quiz-actions">
+                <button type="submit" class="btn btn-primary btn-large">Submit Quiz</button>
+                <a href="{% url 'learning:topic_detail' assessment.topic.id %}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .quiz-page {
+        padding: var(--spacing-xl) 0;
+    }
+
+    .quiz-header {
+        background: var(--surface);
+        padding: var(--spacing-xl);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .quiz-header h1 {
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .quiz-meta {
+        display: flex;
+        gap: var(--spacing-md);
+        flex-wrap: wrap;
+        margin-top: var(--spacing-md);
+    }
+
+    .questions-container {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-lg);
+    }
+
+    .question-card {
+        background: var(--surface);
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+    }
+
+    .question-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-md);
+        padding-bottom: var(--spacing-sm);
+        border-bottom: 2px solid var(--border);
+    }
+
+    .question-number {
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .question-marks {
+        background: var(--bg);
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .question-text {
+        font-size: 1.125rem;
+        margin-bottom: var(--spacing-lg);
+        line-height: 1.6;
+    }
+
+    .options-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+
+    .option-label {
+        display: flex;
+        align-items: center;
+        padding: var(--spacing-md);
+        background: var(--bg);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all 0.3s;
+        border: 2px solid transparent;
+    }
+
+    .option-label:hover {
+        background: #e0e7ff;
+        border-color: var(--primary);
+    }
+
+    .option-label input[type="radio"] {
+        margin-right: var(--spacing-md);
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+    }
+
+    .option-label input[type="radio"]:checked+.option-text {
+        font-weight: 600;
+        color: var(--primary);
+    }
+
+    .option-text {
+        flex: 1;
+    }
+
+    .short-answer {
+        width: 100%;
+        padding: var(--spacing-md);
+        border: 2px solid var(--border);
+        border-radius: var(--radius-md);
+        font-family: inherit;
+        font-size: 1rem;
+    }
+
+    .short-answer:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+    .quiz-actions {
+        display: flex;
+        gap: var(--spacing-md);
+        margin-top: var(--spacing-xl);
+        justify-content: center;
+    }
+
+    .instructor-tag {
+        background: #f0f4ff;
+        color: var(--primary);
+        padding: 0.15rem 0.6rem;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 0.825rem;
+    }
+</style>
+
+<script>
+    // Auto-save progress (optional enhancement)
+    let startTime = new Date();
+
+    // Timer display (optional)
+    function updateTimer() {
+        let elapsed = Math.floor((new Date() - startTime) / 1000);
+        let minutes = Math.floor(elapsed / 60);
+        let seconds = elapsed % 60;
+        console.log(`Time elapsed: ${minutes}:${seconds.toString().padStart(2, '0')}`);
+    }
+
+    setInterval(updateTimer, 1000);
+</script>
+{% endblock %}

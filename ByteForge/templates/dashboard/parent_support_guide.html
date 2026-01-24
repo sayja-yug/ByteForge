@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }} - SmartShiksha{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 4rem 1rem; max-width: 900px;">
+    <!-- Header -->
+    <div class="header-section text-center mb-5">
+        <h1 class="gradient-text display-4 fw-bold mb-3">Supporting Your Child's Learning Journey</h1>
+        <p class="text-muted lead">Simple, effective strategies to help your child succeed with SmartShiksha.</p>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content-wrapper">
+
+        <!-- Tip 1 -->
+        <div class="guide-card mb-4"
+            style="background: white; border-radius: 12px; padding: 2rem; box-shadow: var(--shadow-md); border-left: 5px solid #48bb78;">
+            <div class="d-flex align-items-start gap-3">
+                <div class="icon-box"
+                    style="background: #f0fff4; color: #48bb78; min-width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                    🏠
+                </div>
+                <div>
+                    <h3>Create a Conducive Environment</h3>
+                    <p>Establish a dedicated study space that is quiet, well-lit, and free from distractions like TV or
+                        loud noises. Ensure they have all necessary supplies (notebooks, pens, water) within easy reach.
+                    </p>
+                    <ul class="text-muted mt-2" style="font-size: 0.9rem;">
+                        <li>• Keep the area organized.</li>
+                        <li>• Establish a consistent study schedule.</li>
+                        <li>• Minimize digital distractions during focus time.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tip 2 -->
+        <div class="guide-card mb-4"
+            style="background: white; border-radius: 12px; padding: 2rem; box-shadow: var(--shadow-md); border-left: 5px solid #4299e1;">
+            <div class="d-flex align-items-start gap-3">
+                <div class="icon-box"
+                    style="background: #ebf8ff; color: #4299e1; min-width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                    🗣️
+                </div>
+                <div>
+                    <h3>Encourage Active Discussions</h3>
+                    <p>Ask your child about what they learned today. Instead of just asking "Did you finish your
+                        homework?", ask specific questions like "What was the most interesting thing you learned in
+                        Science today?" or "Can you teach me how to solve that math problem?"</p>
+                    <div class="tip-box mt-3"
+                        style="background: #ebf8ff; padding: 1rem; border-radius: 8px; color: #2b6cb0; font-size: 0.9rem;">
+                        <strong>💡 Pro Tip:</strong> Teaching someone else is one of the best ways to reinforce
+                        learning!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tip 3 -->
+        <div class="guide-card mb-4"
+            style="background: white; border-radius: 12px; padding: 2rem; box-shadow: var(--shadow-md); border-left: 5px solid #ed8936;">
+            <div class="d-flex align-items-start gap-3">
+                <div class="icon-box"
+                    style="background: #fffaf0; color: #ed8936; min-width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                    🎯
+                </div>
+                <div>
+                    <h3>Celebrate Effort, Not Just Results</h3>
+                    <p>Focus on the process and the effort your child puts in, rather than just the final grade. Praise
+                        their persistence, their strategy in solving a problem, or their improvement over time. This
+                        builds a "Growth Mindset".</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tip 4 -->
+        <div class="guide-card mb-4"
+            style="background: white; border-radius: 12px; padding: 2rem; box-shadow: var(--shadow-md); border-left: 5px solid #9f7aea;">
+            <div class="d-flex align-items-start gap-3">
+                <div class="icon-box"
+                    style="background: #faf5ff; color: #9f7aea; min-width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                    🧘
+                </div>
+                <div>
+                    <h3>Promote Healthy Habits</h3>
+                    <p>Learning consumes energy! Ensure your child gets enough sleep (8-10 hours), eats nutritious
+                        meals, and stays hydrated. Encourage physical activity or breaks between study sessions to keep
+                        their mind fresh.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="text-center mt-5">
+        <a href="{% url 'accounts:parent_dashboard' %}" class="btn btn-outline-primary btn-lg">← Back to Dashboard</a>
+    </div>
+</div>
+
+<style>
+    .gradient-text {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .guide-card {
+        transition: transform 0.3s ease;
+    }
+
+    .guide-card:hover {
+        transform: translateY(-5px);
+    }
+</style>
+{% endblock %}

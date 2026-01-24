@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Browse Subjects - SmartShiksha{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="container">
+        <div class="page-header">
+            <h1>📚 Explore Subjects</h1>
+            <p>Choose a subject to start your learning journey</p>
+        </div>
+
+        <div class="subjects-grid">
+            {% for subject in subjects %}
+            <a href="{% url 'learning:subject_detail' subject.id %}" class="subject-card"
+                style="border-top-color: {{ subject.color_code }}">
+                <div class="subject-icon" style="color: {{ subject.color_code }}">
+                    <i class="{{ subject.icon }}"></i>
+                </div>
+                <h3>{{ subject.name }}</h3>
+                <p>{{ subject.description }}</p>
+                <div class="subject-meta">
+                    <span>{{ subject.topic_count }} topics</span>
+                </div>
+            </a>
+            {% empty %}
+            <p class="placeholder-text">No subjects available yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .page-container {
+        padding: var(--spacing-xl) 0;
+    }
+
+    .subjects-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: var(--spacing-lg);
+        margin-top: var(--spacing-lg);
+    }
+
+    .subject-card {
+        background: var(--surface);
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        text-decoration: none;
+        color: var(--text);
+        transition: all 0.3s;
+        border-top: 4px solid var(--primary);
+        text-align: center;
+    }
+
+    .subject-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-xl);
+    }
+
+    .subject-icon {
+        font-size: 3rem;
+        margin-bottom: var(--spacing-md);
+    }
+
+    .subject-card h3 {
+        margin-bottom: var(--spacing-sm);
+        color: var(--text);
+    }
+
+    .subject-card p {
+        color: var(--text-light);
+        margin-bottom: var(--spacing-md);
+        font-size: 0.875rem;
+    }
+
+    .subject-meta {
+        padding-top: var(--spacing-sm);
+        border-top: 1px solid var(--border);
+        font-size: 0.875rem;
+        color: var(--text-light);
+    }
+</style>
+{% endblock %}

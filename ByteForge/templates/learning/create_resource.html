@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - SmartShiksha{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; margin: 2rem auto;">
+    <div class="page-header">
+        <h1>{{ page_title }}</h1>
+        <p>Add a new learning resource (video, article, PDF) to a topic.</p>
+    </div>
+
+    <div class="form-card">
+        <form method="post" enctype="multipart/form-data" class="resource-form">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-error">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label for="{{ form.title.id_for_label }}">Resource Title *</label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                    <span class="error-text">{{ form.title.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="{{ form.description.id_for_label }}">Description *</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                    <span class="error-text">{{ form.description.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.topic.id_for_label }}">Topic *</label>
+                    {{ form.topic }}
+                    {% if form.topic.errors %}
+                    <span class="error-text">{{ form.topic.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.resource_type.id_for_label }}">Type *</label>
+                    {{ form.resource_type }}
+                    {% if form.resource_type.errors %}
+                    <span class="error-text">{{ form.resource_type.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.difficulty.id_for_label }}">Difficulty *</label>
+                    {{ form.difficulty }}
+                    {% if form.difficulty.errors %}
+                    <span class="error-text">{{ form.difficulty.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.duration_minutes.id_for_label }}">Duration (minutes)</label>
+                    {{ form.duration_minutes }}
+                    {% if form.duration_minutes.errors %}
+                    <span class="error-text">{{ form.duration_minutes.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="{{ form.url.id_for_label }}">External URL (YouTube, Link, etc.)</label>
+                    {{ form.url }}
+                    {% if form.url.errors %}
+                    <span class="error-text">{{ form.url.errors.0 }}</span>
+                    {% endif %}
+                    <small class="help-text">Required for video tutorials and online articles</small>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="{{ form.file.id_for_label }}">Or Upload File (PDF, etc.)</label>
+                    {{ form.file }}
+                    {% if form.file.errors %}
+                    <span class="error-text">{{ form.file.errors.0 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="{{ form.author.id_for_label }}">Author / Source</label>
+                    {{ form.author }}
+                    {% if form.author.errors %}
+                    <span class="error-text">{{ form.author.errors.0 }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a href="{% url 'learning:teacher_resources' %}" class="btn btn-outline">Cancel</a>
+                <button type="submit" class="btn btn-primary">Add Resource</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .page-header {
+        margin-bottom: 2rem;
+    }
+
+    .page-header h1 {
+        margin-bottom: 0.5rem;
+        color: var(--text);
+    }
+
+    .page-header p {
+        color: var(--text-light);
+    }
+
+    .form-card {
+        background: var(--surface);
+        padding: 2rem;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--text);
+    }
+
+    .form-control {
+        padding: 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        font-size: 1rem;
+        transition: border-color 0.2s;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .help-text {
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: var(--text-light);
+    }
+
+    .error-text {
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: var(--error);
+    }
+
+    .alert {
+        padding: 1rem;
+        border-radius: var(--radius-md);
+        margin-bottom: 1.5rem;
+    }
+
+    .alert-error {
+        background: #fee2e2;
+        color: #991b1b;
+        border-left: 4px solid var(--error);
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}

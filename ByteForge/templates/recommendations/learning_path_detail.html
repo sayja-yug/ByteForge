@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ path.name }} - Learning Path{% endblock %}
+
+{% block extra_css %}
+<style>
+    .path-container {
+        max-width: 1000px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    .path-header {
+        background: white;
+        padding: 40px;
+        border-radius: 24px;
+        box-shadow: 0 10px 30px rgba(161, 146, 126, 0.1);
+        margin-bottom: 40px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .path-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 8px;
+        background: linear-gradient(to right, var(--primary), var(--secondary));
+    }
+
+    .path-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+    }
+
+    .path-header h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--text);
+        margin-bottom: 10px;
+    }
+
+    .path-description {
+        color: var(--text-light);
+        font-size: 1.1rem;
+        max-width: 700px;
+        margin-bottom: 30px;
+    }
+
+    .overall-progress {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        background: var(--bg);
+        padding: 20px;
+        border-radius: 16px;
+    }
+
+    .progress-info h4 {
+        margin-bottom: 10px;
+        font-size: 1.1rem;
+    }
+
+    .progress-bar-large {
+        height: 12px;
+        background: rgba(161, 146, 126, 0.2);
+        border-radius: 6px;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .progress-fill-large {
+        height: 100%;
+        background: linear-gradient(to right, var(--primary), var(--primary-dark));
+        border-radius: 6px;
+        transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .steps-timeline {
+        position: relative;
+        padding-left: 50px;
+    }
+
+    .steps-timeline::before {
+        content: '';
+        position: absolute;
+        left: 20px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: rgba(161, 146, 126, 0.2);
+    }
+
+    .step-card {
+        background: white;
+        padding: 30px;
+        border-radius: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        margin-bottom: 30px;
+        position: relative;
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+
+    .step-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    .step-card.completed {
+        border-left-color: #10b981;
+    }
+
+    .step-card.in_progress {
+        border-left-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    }
+
+    .step-card.locked {
+        opacity: 0.7;
+    }
+
+    .step-number-badge {
+        position: absolute;
+        left: -50px;
+        top: 30px;
+        width: 40px;
+        height: 40px;
+        background: white;
+        border: 2px solid var(--primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: var(--primary);
+        z-index: 2;
+    }
+
+    .step-card.completed .step-number-badge {
+        background: #10b981;
+        border-color: #10b981;
+        color: white;
+    }
+
+    .step-card.locked .step-number-badge {
+        border-color: rgba(161, 146, 126, 0.4);
+        color: var(--text-light);
+    }
+
+    .step-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 15px;
+    }
+
+    .step-header h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-completed {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-available {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .status-locked {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    .resources-list {
+        margin-top: 20px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+    }
+
+    .resource-link {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px;
+        background: var(--bg);
+        border-radius: 12px;
+        text-decoration: none;
+        color: var(--text);
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: background 0.2s;
+    }
+
+    .resource-link:hover {
+        background: rgba(161, 146, 126, 0.1);
+    }
+
+    .resource-icon {
+        font-size: 1.2rem;
+    }
+
+    .btn-action {
+        margin-top: 25px;
+    }
+
+    .breadcrumb {
+        margin-bottom: 30px;
+        display: flex;
+        gap: 10px;
+        color: var(--text-light);
+    }
+
+    .breadcrumb a {
+        text-decoration: none;
+        color: var(--primary);
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="path-container">
+    <div class="breadcrumb">
+        <a href="{% url 'accounts:student_dashboard' %}">Dashboard</a>
+        <span>/</span>
+        <span>Learning Path</span>
+    </div>
+
+    <div class="path-header">
+        <div class="path-title-row">
+            <div>
+                <h1>{{ path.name }}</h1>
+                <p class="path-description">{{ path.description }}</p>
+            </div>
+            <div class="path-meta" style="text-align: right;">
+                <p>Started: {{ path.started_at|date:"M d, Y"|default:"Just now" }}</p>
+                <p>Estimated: {{ path.estimated_completion_days }} days</p>
+            </div>
+        </div>
+
+        <div class="overall-progress">
+            <div style="flex: 1;">
+                <div class="progress-info">
+                    <h4>Overall Progress: {{ path.progress_percentage }}%</h4>
+                    <div class="progress-bar-large">
+                        <div class="progress-fill-large" style="width: {{ path.progress_percentage }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="steps-timeline">
+        {% for step in steps %}
+        <div class="step-card {{ step.status }}{% if step.status == 'in_progress' %} in_progress{% endif %}">
+            <div class="step-number-badge">
+                {% if step.status == 'completed' %}✓{% else %}{{ step.step_number }}{% endif %}
+            </div>
+
+            <div class="step-header">
+                <h3>{{ step.title }}</h3>
+                <span class="status-badge status-{{ step.status }}">
+                    {{ step.get_status_display }}
+                </span>
+            </div>
+
+            <p style="color: var(--text-light);">{{ step.description }}</p>
+
+            {% if step.status != 'locked' %}
+            <div class="resources-list">
+                {% for resource in step.recommended_resources.all %}
+                <a href="{% url 'learning:resource_detail' resource.id %}" class="resource-link">
+                    <span class="resource-icon">
+                        {% if resource.resource_type == 'video' %}📺{% elif resource.resource_type == 'article' %}📝{%
+                        else %}📄{% endif %}
+                    </span>
+                    {{ resource.title }}
+                </a>
+                {% endfor %}
+            </div>
+
+            <div class="btn-action">
+                <a href="{% url 'learning:topic_detail' step.topic.id %}" class="btn btn-primary">
+                    {% if step.status == 'completed' %}Review Topic{% else %}Start Learning Topic{% endif %}
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

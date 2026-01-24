@@ -1,0 +1,522 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ resource.title }} - AI Learning Platform{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="container">
+        <!-- Breadcrumb -->
+        <nav class="breadcrumb">
+            <a href="{% url 'learning:browse_subjects' %}">Subjects</a>
+            <span>/</span>
+            <a href="{% url 'learning:subject_detail' resource.topic.subject.id %}">{{ resource.topic.subject.name }}</a>
+            <span>/</span>
+            <a href="{% url 'learning:topic_detail' resource.topic.id %}">{{ resource.topic.name }}</a>
+            <span>/</span>
+            <span>{{ resource.title }}</span>
+        </nav>
+
+        <div class="resource-layout">
+            <!-- Main Content -->
+            <div class="resource-main">
+                <div class="resource-header">
+                    <div class="resource-type-badge resource-type-{{ resource.resource_type }}">
+                        {% if resource.resource_type == 'video' %}📹
+                        {% elif resource.resource_type == 'article' %}📄
+                        {% elif resource.resource_type == 'pdf' %}📕
+                        {% elif resource.resource_type == 'quiz' %}✏️
+                        {% else %}📚{% endif %}
+                        {{ resource.get_resource_type_display }}
+                    </div>
+                    <h1>{{ resource.title }}</h1>
+                    <p class="resource-description">{{ resource.description }}</p>
+                </div>
+
+                <!-- Resource Content -->
+                <div class="resource-content">
+                    {% if resource.url %}
+                    <div class="resource-embed">
+                        {% if resource.resource_type == 'video' %}
+                        <div class="video-container">
+                            {% if 'youtube.com' in resource.url or 'youtu.be' in resource.url %}
+                            <!-- YouTube embed -->
+                            <iframe src="{{ embed_url }}" title="{{ resource.title }}" frameborder="0"
+                                allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
+                            </iframe>
+                            {% else %}
+                            <!-- Generic video player -->
+                            <div class="video-player">
+                                <video width="100%" controls>
+                                    <source src="{{ resource.url }}" type="video/mp4">
+                                    Your browser does not support the video tag.
+                                </video>
+                            </div>
+                            {% endif %}
+                            <div class="video-info">
+                                {% if resource.duration_minutes %}
+                                <span class="video-duration">⏱️ {{ resource.duration_minutes }} minutes</span>
+                                {% endif %}
+                                <a href="{{ resource.url }}" target="_blank" class="btn btn-outline">Open in new tab</a>
+                            </div>
+                        </div>
+                        {% elif resource.resource_type == 'pdf' %}
+                        <div class="pdf-container">
+                            <div class="pdf-header">
+                                <div class="pdf-icon">📕</div>
+                                <div class="pdf-info">
+                                    <h3>{{ resource.title }}</h3>
+                                    {% if resource.duration_minutes %}
+                                    <p class="pdf-duration">Estimated reading time: {{ resource.duration_minutes }}
+                                        minutes</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="pdf-content">
+                                <p class="pdf-description">{{ resource.description }}</p>
+                                {% if resource.file %}
+                                <a href="{{ resource.file.url }}" download class="btn btn-primary btn-large">
+                                    📥 Download PDF Lecture Notes
+                                </a>
+                                {% else %}
+                                <div class="pdf-placeholder">
+                                    <p>📄 PDF Lecture Notes Available</p>
+                                    <p class="pdf-note">This comprehensive lecture PDF contains all the material you
+                                        need to master this topic.</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% else %}
+                        <a href="{{ resource.url }}" target="_blank" rel="noopener noreferrer"
+                            class="btn btn-primary btn-large">
+                            Open Resource →
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    {% if resource.file %}
+                    <div class="file-download">
+                        <a href="{{ resource.file.url }}" download class="btn btn-secondary">
+                            📥 Download File
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Student Actions -->
+                {% if user.is_authenticated and user.role == 'student' and activity %}
+                <div class="student-actions">
+                    {% if activity.status != 'completed' %}
+                    <form method="post" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="complete">
+                        <button type="submit" class="btn btn-success">
+                            ✓ Mark as Completed
+                        </button>
+                    </form>
+                    {% else %}
+                    <div class="completion-badge">
+                        ✓ Completed on {{ activity.completed_at|date:"M d, Y" }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Rating Form -->
+                {% if activity.status == 'completed' and not activity.rating %}
+                <div class="rating-section">
+                    <h3>Rate this resource</h3>
+                    <form method="post" class="rating-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="rate">
+
+                        <div class="form-group">
+                            <label>How helpful was this resource?</label>
+                            <div class="star-rating">
+                                {% for i in "12345" %}
+                                <input type="radio" name="rating" value="{{ i }}" id="star{{ i }}" required>
+                                <label for="star{{ i }}">⭐</label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Was this helpful?</label>
+                            <select name="was_helpful" class="form-select">
+                                <option value="true">Yes, very helpful</option>
+                                <option value="false">Not really</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Feedback (optional)</label>
+                            <textarea name="feedback" rows="3" class="form-textarea"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Submit Rating</button>
+                    </form>
+                </div>
+                {% elif activity.rating %}
+                <div class="rating-display">
+                    <p>Your rating: ⭐ {{ activity.rating }}/5</p>
+                    {% if activity.feedback %}
+                    <p class="feedback-text">"{{ activity.feedback }}"</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% endif %}
+            </div>
+
+            <!-- Sidebar -->
+            <div class="resource-sidebar">
+                <!-- Resource Info -->
+                <div class="info-card">
+                    <h3>Resource Info</h3>
+                    <div class="info-list">
+                        <div class="info-item">
+                            <span class="info-label">Difficulty</span>
+                            <span class="difficulty-badge difficulty-{{ resource.difficulty }}">
+                                {{ resource.get_difficulty_display }}
+                            </span>
+                        </div>
+                        {% if resource.duration_minutes %}
+                        <div class="info-item">
+                            <span class="info-label">Duration</span>
+                            <span>{{ resource.duration_minutes }} minutes</span>
+                        </div>
+                        {% endif %}
+                        <div class="info-item">
+                            <span class="info-label">Rating</span>
+                            <span>⭐ {{ resource.average_rating|floatformat:1 }}/5</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Views</span>
+                            <span>{{ resource.view_count }}</span>
+                        </div>
+                        {% if resource.author %}
+                        <div class="info-item">
+                            <span class="info-label">Author</span>
+                            <span>{{ resource.author }}</span>
+                        </div>
+                        {% endif %}
+                        {% if resource.created_by %}
+                        <div class="info-item">
+                            <span class="info-label">Instructor</span>
+                            <span>🎓 {{ resource.created_by.get_full_name|default:resource.created_by.username }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Progress Card (for students) -->
+                {% if activity %}
+                <div class="info-card">
+                    <h3>Your Progress</h3>
+                    <div class="progress-info">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: {{ activity.progress_percentage }}%"></div>
+                        </div>
+                        <p>{{ activity.progress_percentage }}% Complete</p>
+                        <p class="status-text">Status: {{ activity.get_status_display }}</p>
+                        {% if activity.time_spent_minutes %}
+                        <p class="time-text">Time spent: {{ activity.time_spent_minutes }} min</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .resource-layout {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: var(--spacing-xl);
+    }
+
+    .resource-header {
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .resource-header h1 {
+        margin: var(--spacing-md) 0;
+    }
+
+    .resource-description {
+        color: var(--text-light);
+        font-size: 1.125rem;
+    }
+
+    .resource-content {
+        background: var(--surface);
+        padding: var(--spacing-xl);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .video-placeholder {
+        text-align: center;
+        padding: var(--spacing-xl);
+        background: var(--bg);
+        border-radius: var(--radius-md);
+    }
+
+    .video-placeholder p {
+        font-size: 3rem;
+        margin-bottom: var(--spacing-md);
+    }
+
+    .student-actions {
+        margin: var(--spacing-lg) 0;
+    }
+
+    .completion-badge {
+        display: inline-block;
+        padding: var(--spacing-md);
+        background: #d1fae5;
+        color: #065f46;
+        border-radius: var(--radius-md);
+        font-weight: 600;
+    }
+
+    .rating-section {
+        background: var(--surface);
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        margin-top: var(--spacing-lg);
+    }
+
+    .rating-section h3 {
+        margin-bottom: var(--spacing-md);
+    }
+
+    .star-rating {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+        gap: var(--spacing-xs);
+    }
+
+    .star-rating input {
+        display: none;
+    }
+
+    .star-rating label {
+        font-size: 2rem;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .star-rating label:hover,
+    .star-rating input:checked~label {
+        transform: scale(1.2);
+    }
+
+    .form-select,
+    .form-textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid var(--border);
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+    }
+
+    .rating-display {
+        background: var(--bg);
+        padding: var(--spacing-md);
+        border-radius: var(--radius-md);
+        margin-top: var(--spacing-lg);
+    }
+
+    .feedback-text {
+        font-style: italic;
+        color: var(--text-light);
+        margin-top: var(--spacing-sm);
+    }
+
+    .info-card {
+        background: var(--surface);
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .info-card h3 {
+        margin-bottom: var(--spacing-md);
+        font-size: 1rem;
+    }
+
+    .info-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: var(--spacing-sm);
+        border-bottom: 1px solid var(--border);
+    }
+
+    .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: var(--text-light);
+        font-size: 0.875rem;
+    }
+
+    .progress-info {
+        text-align: center;
+    }
+
+    .progress-info p {
+        margin: var(--spacing-sm) 0;
+        font-size: 0.875rem;
+    }
+
+    .status-text {
+        color: var(--primary);
+        font-weight: 600;
+    }
+
+    .time-text {
+        color: var(--text-light);
+    }
+
+    /* Video Player Styles */
+    .video-container {
+        background: #000;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        margin-bottom: var(--spacing-lg);
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        box-shadow: var(--shadow-xl);
+    }
+
+    .video-container iframe,
+    .video-player video {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+
+    .video-player {
+        background: #000;
+        border-radius: var(--radius-lg);
+    }
+
+    .video-player video {
+        border-radius: var(--radius-lg);
+    }
+
+    .video-info {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        padding: var(--spacing-md);
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+    }
+
+    .video-duration {
+        color: var(--text-light);
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    /* PDF Styles */
+    .pdf-container {
+        background: var(--surface);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        margin-bottom: var(--spacing-lg);
+        box-shadow: var(--shadow-md);
+    }
+
+    .pdf-header {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-lg);
+        padding: var(--spacing-lg);
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        border-bottom: 2px solid #f59e0b;
+    }
+
+    .pdf-icon {
+        font-size: 3rem;
+        flex-shrink: 0;
+    }
+
+    .pdf-info h3 {
+        margin: 0 0 var(--spacing-xs) 0;
+        color: #92400e;
+    }
+
+    .pdf-duration {
+        color: #b45309;
+        font-size: 0.875rem;
+        margin: 0;
+    }
+
+    .pdf-content {
+        padding: var(--spacing-lg);
+    }
+
+    .pdf-description {
+        color: var(--text-light);
+        line-height: 1.6;
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .pdf-placeholder {
+        background: var(--bg);
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-md);
+        text-align: center;
+        border: 2px dashed var(--border);
+    }
+
+    .pdf-placeholder p {
+        margin: var(--spacing-sm) 0;
+    }
+
+    .pdf-placeholder p:first-child {
+        font-size: 2rem;
+        margin-bottom: var(--spacing-md);
+    }
+
+    .pdf-note {
+        color: var(--text-light);
+        font-size: 0.875rem;
+    }
+
+    @media (max-width: 968px) {
+        .resource-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .pdf-header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .pdf-icon {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}

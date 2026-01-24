@@ -1,0 +1,380 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ topic.name }} - SmartShiksha{% endblock %}
+
+{% block content %}
+<div class="page-container">
+    <div class="container">
+        <!-- Breadcrumb -->
+        <nav class="breadcrumb">
+            <a href="{% url 'learning:browse_subjects' %}">Subjects</a>
+            <span>/</span>
+            <a href="{% url 'learning:subject_detail' topic.subject.id %}">{{ topic.subject.name }}</a>
+            <span>/</span>
+            <span>{{ topic.name }}</span>
+        </nav>
+
+        <!-- Topic Header -->
+        <div class="topic-header-section">
+            <div class="topic-info">
+                <h1>{{ topic.name }}</h1>
+                <p class="topic-desc">{{ topic.description }}</p>
+                <div class="topic-meta">
+                    <span class="badge badge-{{ topic.difficulty_level }}">{{ topic.get_difficulty_level_display }}</span>
+                    <span class="meta-item">⏱️ {{ topic.estimated_hours }} hours</span>
+                </div>
+            </div>
+
+            {% if student_data %}
+            <div class="student-stats-card">
+                <h3>Your Progress</h3>
+                <div class="stat-grid">
+                    <div class="stat-item">
+                        <div class="stat-value">{{ student_data.avg_score|floatformat:0 }}%</div>
+                        <div class="stat-label">Average Score</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ student_data.completed_resources }}</div>
+                        <div class="stat-label">Resources Completed</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Resource Filters -->
+        <div class="filters-section">
+            <h2>📚 Learning Resources</h2>
+            <div class="filter-buttons">
+                <a href="?type=" class="filter-btn {% if not request.GET.type %}active{% endif %}">All</a>
+                {% for type_code, type_name in resource_types %}
+                <a href="?type={{ type_code }}"
+                    class="filter-btn {% if request.GET.type == type_code %}active{% endif %}">
+                    {{ type_name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Resources Grid -->
+        <div class="resources-grid">
+            {% for resource in resources %}
+            <div class="resource-card">
+                <div class="resource-type-badge resource-type-{{ resource.resource_type }}">
+                    {% if resource.resource_type == 'video' %}📹
+                    {% elif resource.resource_type == 'article' %}📄
+                    {% elif resource.resource_type == 'pdf' %}📕
+                    {% elif resource.resource_type == 'quiz' %}✏️
+                    {% elif resource.resource_type == 'project' %}🛠️
+                    {% else %}📚{% endif %}
+                    {{ resource.get_resource_type_display }}
+                </div>
+
+                <h3>{{ resource.title }}</h3>
+                <p class="resource-desc">{{ resource.description|truncatewords:20 }}</p>
+
+                <div class="resource-meta">
+                    <span class="difficulty-badge difficulty-{{ resource.difficulty }}">{{ resource.get_difficulty_display }}</span>
+                    {% if resource.duration_minutes %}
+                    <span>⏱️ {{ resource.duration_minutes }} min</span>
+                    {% endif %}
+                    {% if resource.created_by %}
+                    <span class="teacher-attribution">
+                        🎓 {{ resource.created_by.get_full_name|default:resource.created_by.username }}
+                    </span>
+                    {% endif %}
+                </div>
+
+                <div class="resource-footer">
+                    <span class="view-count">👁️ {{ resource.view_count }} views</span>
+                    <a href="{% url 'learning:resource_detail' resource.id %}" class="btn btn-sm btn-primary">
+                        {% if user.is_authenticated and user.role == 'student' %}Start Learning{% else %}View{% endif %}
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <p class="placeholder-text">No learning resources available for this topic yet.</p>
+            {% endfor %}
+        </div>
+
+        <!-- Teacher Assessments Section -->
+        {% if assessments %}
+        <div class="filters-section" style="margin-top: var(--spacing-xl);">
+            <h2>✏️ Teacher Assessments</h2>
+        </div>
+        <div class="resources-grid">
+            {% for assessment in assessments %}
+            <div class="resource-card assessment-teacher">
+                <div class="resource-type-badge resource-type-quiz">
+                    ✏️ {{ assessment.get_assessment_type_display }}
+                </div>
+
+                <h3>{{ assessment.title }}</h3>
+                <p class="resource-desc">{{ assessment.description|truncatewords:20 }}</p>
+
+                <div class="resource-meta">
+                    <span class="difficulty-badge difficulty-{{ assessment.difficulty }}">{{ assessment.get_difficulty_display }}</span>
+                    {% if assessment.time_limit_minutes %}
+                    <span>⏱️ {{ assessment.time_limit_minutes }} min</span>
+                    {% endif %}
+                    <span class="teacher-attribution">
+                        {% if assessment.created_by %}
+                        🎓 By {{ assessment.created_by.user.get_full_name|default:assessment.created_by.user.username }}
+                        {% else %}
+                        🤖 AI Generated
+                        {% endif %}
+                    </span>
+                </div>
+
+                <div class="resource-footer">
+                    <span class="view-count">📊 {{ assessment.total_marks }} Marks</span>
+                    <a href="{% url 'assessments:take_quiz' assessment.id %}" class="btn btn-sm btn-primary">
+                        Take Assessment →
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        margin-bottom: var(--spacing-lg);
+        font-size: 0.875rem;
+    }
+
+    .breadcrumb a {
+        color: var(--primary);
+        text-decoration: none;
+    }
+
+    .breadcrumb a:hover {
+        text-decoration: underline;
+    }
+
+    .breadcrumb span {
+        color: var(--text-light);
+    }
+
+    .topic-header-section {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .topic-info h1 {
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .topic-desc {
+        color: var(--text-light);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .topic-meta {
+        display: flex;
+        gap: var(--spacing-md);
+        align-items: center;
+    }
+
+    .meta-item {
+        color: var(--text-light);
+        font-size: 0.875rem;
+    }
+
+    .student-stats-card {
+        background: var(--surface);
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        min-width: 250px;
+    }
+
+    .student-stats-card h3 {
+        margin-bottom: var(--spacing-md);
+        font-size: 1rem;
+    }
+
+    .stat-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-md);
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--text-light);
+    }
+
+    .filters-section {
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .filters-section h2 {
+        margin-bottom: var(--spacing-md);
+    }
+
+    .filter-buttons {
+        display: flex;
+        gap: var(--spacing-sm);
+        flex-wrap: wrap;
+    }
+
+    .filter-btn {
+        padding: 0.5rem 1rem;
+        border: 2px solid var(--border);
+        border-radius: var(--radius-md);
+        text-decoration: none;
+        color: var(--text);
+        font-size: 0.875rem;
+        transition: all 0.3s;
+    }
+
+    .filter-btn:hover,
+    .filter-btn.active {
+        border-color: var(--primary);
+        background: var(--primary);
+        color: white;
+    }
+
+    .resources-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: var(--spacing-lg);
+    }
+
+    .resource-card {
+        background: var(--surface);
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        transition: transform 0.3s;
+    }
+
+    .resource-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-xl);
+    }
+
+    .resource-type-badge {
+        display: inline-block;
+        padding: 0.375rem 0.75rem;
+        border-radius: var(--radius-md);
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-bottom: var(--spacing-md);
+    }
+
+    .resource-type-video {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .resource-type-article {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .resource-type-pdf {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .resource-type-quiz {
+        background: #fce7f3;
+        color: #9f1239;
+    }
+
+    .resource-card h3 {
+        margin-bottom: var(--spacing-sm);
+        font-size: 1.125rem;
+    }
+
+    .resource-desc {
+        color: var(--text-light);
+        font-size: 0.875rem;
+        margin-bottom: var(--spacing-md);
+    }
+
+    .resource-meta {
+        display: flex;
+        gap: var(--spacing-sm);
+        align-items: center;
+        margin-bottom: var(--spacing-md);
+        font-size: 0.875rem;
+        color: var(--text-light);
+    }
+
+    .difficulty-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--radius-sm);
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .difficulty-easy {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .difficulty-medium {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .difficulty-hard {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .resource-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: var(--spacing-md);
+        border-top: 1px solid var(--border);
+    }
+
+    .view-count {
+        font-size: 0.875rem;
+        color: var(--text-light);
+    }
+
+    @media (max-width: 768px) {
+        .topic-header-section {
+            grid-template-columns: 1fr;
+        }
+
+        .resources-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .teacher-attribution {
+        font-style: italic;
+        color: var(--primary);
+        font-weight: 500;
+        background: #f0f4ff;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Assignments - SmartShiksha{% endblock %}
+
+{% block content %}
+<div class="container" style="margin: 2rem auto;">
+    <div class="page-header">
+        <div>
+            <h1>My Assignments</h1>
+            <p>Manage all your assignments and assessments</p>
+        </div>
+        <a href="{% url 'assessments:create_assignment' %}" class="btn btn-primary">
+            ✏️ Create New Assignment
+        </a>
+    </div>
+
+    {% if assignments_with_counts %}
+    <div class="assignments-table-wrapper">
+        <table class="assignments-table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Topic</th>
+                    <th>Type</th>
+                    <th>Questions</th>
+                    <th>Marks</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in assignments_with_counts %}
+                <tr>
+                    <td>
+                        <strong>{{ item.assignment.title }}</strong>
+                        {% if item.assignment.due_date %}
+                        <br><small style="color: var(--text-light);">Due: {{ item.assignment.due_date|date:"M d, Y H:i" }}</small>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.assignment.topic.name }}</td>
+                    <td>
+                        <span class="type-badge">{{ item.assignment.get_assessment_type_display }}</span>
+                    </td>
+                    <td class="text-center">{{ item.question_count }}</td>
+                    <td class="text-center">{{ item.assignment.total_marks }}</td>
+                    <td>
+                        {% if item.assignment.is_published %}
+                        <span class="status-badge published">✓ Published</span>
+                        {% else %}
+                        <span class="status-badge draft">📝 Draft</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.assignment.created_at|date:"M d, Y" }}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{% url 'assessments:add_question' item.assignment.id %}" class="btn-icon"
+                                title="Add Questions">➕</a>
+                            <a href="{% url 'assessments:edit_assignment' item.assignment.id %}" class="btn-icon"
+                                title="Edit">✏️</a>
+                            <a href="{% url 'assessments:toggle_publish' item.assignment.id %}" class="btn-icon"
+                                title="Toggle Publish">
+                                {% if item.assignment.is_published %}🔒{% else %}🔓{% endif %}
+                            </a>
+                            <a href="{% url 'assessments:delete_assignment' item.assignment.id %}"
+                                class="btn-icon delete" title="Delete">🗑️</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📝</div>
+        <h3>No Assignments Yet</h3>
+        <p>Create your first assignment to get started!</p>
+        <a href="{% url 'assessments:create_assignment' %}" class="btn btn-primary">
+            Create Assignment
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .page-header h1 {
+        margin-bottom: 0.25rem;
+        color: var(--text);
+    }
+
+    .page-header p {
+        color: var(--text-light);
+        margin: 0;
+    }
+
+    .assignments-table-wrapper {
+        background: var(--surface);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+    }
+
+    .assignments-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .assignments-table thead {
+        background: var(--bg);
+    }
+
+    .assignments-table th,
+    .assignments-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .assignments-table th {
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .assignments-table tbody tr:hover {
+        background-color: rgba(59, 130, 246, 0.05);
+    }
+
+    .text-center {
+        text-align: center !important;
+    }
+
+    .type-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        background: #e0e7ff;
+        color: #4338ca;
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        border-radius: var(--radius-md);
+        font-size: 0.825rem;
+        font-weight: 600;
+    }
+
+    .status-badge.published {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-badge.draft {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: var(--radius-md);
+        background: var(--bg);
+        text-decoration: none;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    .btn-icon:hover {
+        background: var(--primary);
+        transform: translateY(-2px);
+    }
+
+    .btn-icon.delete:hover {
+        background: var(--error);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: var(--surface);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state h3 {
+        margin-bottom: 0.5rem;
+        color: var(--text);
+    }
+
+    .empty-state p {
+        color: var(--text-light);
+        margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .assignments-table-wrapper {
+            overflow-x: auto;
+        }
+
+        .assignments-table {
+            min-width: 800px;
+        }
+    }
+</style>
+{% endblock %}

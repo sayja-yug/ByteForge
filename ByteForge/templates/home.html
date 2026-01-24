@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Transform Your Learning Journey with AI{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero">
+    <div class="container slide-up">
+        <div class="hero-content">
+            <h1 class="hero-title">Transform Your Learning Journey with SmartShiksha</h1>
+            <p class="hero-subtitle">
+                Personalized learning paths, adaptive assessments, and intelligent recommendations
+                tailored to your unique learning style and pace.
+            </p>
+            <div class="hero-buttons">
+                <a href="{% url 'accounts:register_choice' %}" class="btn btn-primary btn-large">Get Started Free</a>
+                <a href="{% url 'accounts:login' %}" class="btn btn-secondary btn-large">Login</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features">
+    <div class="container">
+        <h2 class="section-title">Why Choose SmartShiksha?</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h3>AI-Powered Recommendations</h3>
+                <p>Get personalized learning resources based on your performance, interests, and learning style.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Adaptive Learning Paths</h3>
+                <p>Dynamic roadmaps that adjust to your progress and identify knowledge gaps automatically.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3>Smart Assessments</h3>
+                <p>Adaptive quizzes with Bloom's taxonomy support and instant feedback.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🏆</div>
+                <h3>Gamification</h3>
+                <p>Earn XP, unlock badges, and maintain learning streaks to stay motivated.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">👨‍🏫</div>
+                <h3>Teacher Analytics</h3>
+                <p>Comprehensive insights into class performance and student engagement.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">👨‍👩‍👧</div>
+                <h3>Parent Monitoring</h3>
+                <p>Transparent progress tracking with early warning alerts for parents.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🧠</div>
+                <h3>Machine Learning Models</h3>
+                <p>Advanced cross-validation of student data to predict future performance and mitigate learning blocks.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Roles Section -->
+<section class="roles">
+    <div class="container">
+        <h2 class="section-title">Join As</h2>
+        <div class="roles-grid">
+            <div class="role-card">
+                <div class="role-icon">🎓</div>
+                <h3>Student</h3>
+                <p>Personalized learning experience with AI-powered recommendations</p>
+                <a href="{% url 'accounts:register_student' %}" class="btn btn-outline">Register as Student</a>
+            </div>
+            <div class="role-card">
+                <div class="role-icon">👨‍🏫</div>
+                <h3>Teacher</h3>
+                <p>Manage classes, create assessments, and track student progress</p>
+                <a href="{% url 'accounts:register_teacher' %}" class="btn btn-outline">Register as Teacher</a>
+            </div>
+            <div class="role-card">
+                <div class="role-icon">👨‍👩‍👧</div>
+                <h3>Parent</h3>
+                <p>Monitor your child's learning journey and receive progress updates</p>
+                <a href="{% url 'accounts:register_parent' %}" class="btn btn-outline">Register as Parent</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta">
+    <div class="container">
+        <h2>Ready to Start Learning Smarter with SmartShiksha?</h2>
+        <p>Join thousands of students already transforming their education with AI</p>
+        <a href="{% url 'accounts:register_choice' %}" class="btn btn-primary btn-large">Get Started Now</a>
+    </div>
+</section>
+{% endblock %}
