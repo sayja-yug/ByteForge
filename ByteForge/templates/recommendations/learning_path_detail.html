@@ -27,8 +27,7 @@
                     <p class="hero-desc">{{ path.description }}</p>
 
                     <div class="meta-tags">
-                        <span class="meta-tag"><i class="far fa-calendar-alt"></i> Started {{ path.started_at|date:"M d,
-                            Y"|default:"Today" }}</span>
+                        <span class="meta-tag"><i class="far fa-calendar-alt"></i> Started {{ path.started_at|date:"M d,Y"|default:"Today" }}</span>
                         <span class="meta-tag"><i class="far fa-clock"></i> ~{{ path.estimated_completion_days }}
                             Days</span>
                     </div>
