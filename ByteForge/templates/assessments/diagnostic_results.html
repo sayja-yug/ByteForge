@@ -1,93 +1,467 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Diagnostic Results - SmartShiksha{% endblock %}
 
 {% block content %}
-<div class="container" style="padding: 4rem 1rem;">
-    <!-- Header Section -->
-    <div class="text-center mb-5">
-        <span class="badge bg-success mb-2"
-            style="font-size: 0.9rem; padding: 0.5em 1em; background: #28a745; color: white; border-radius: 20px;">Analysis
-            Complete</span>
-        <h1 class="mb-3">Your Personalized Learning Profile</h1>
-        <p class="text-muted">Based on your diagnostic, we've identified your current level and created a roadmap for
-            you.</p>
+<div class="diagnostic-page">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="container text-center">
+            <div class="hero-badge">
+                <i class="fas fa-check-circle"></i> Analysis Complete
+            </div>
+            <h1 class="hero-title">Your Personalized Learning Profile</h1>
+            <p class="hero-subtitle">We've analyzed your performance and crafted a custom roadmap just for you.</p>
+        </div>
     </div>
 
-    <!-- Level & Summary Card -->
-    <div class="row justify-content-center mb-5">
-        <div class="col-md-8">
-            <div class="card text-center p-5"
-                style="border: none; box-shadow: var(--shadow-lg); border-radius: 20px; background: linear-gradient(135deg, #ffffff 0%, #f7f9fc 100%);">
-                <h3 class="text-uppercase text-muted" style="font-size: 0.9rem; letter-spacing: 2px;">Readiness Level
-                </h3>
-                <h2 class="display-4 fw-bold mb-4" style="color: #4a5568;">{{ classification }}</h2>
+    <div class="container content-container">
+        <!-- Readiness Level Card -->
+        <div class="results-card main-card">
+            <div class="readiness-header">
+                <span class="label">Current Readiness Level</span>
+                <h2 class="level-display">{{ classification }}</h2>
+            </div>
 
-                <div class="row mt-4">
-                    <div class="col-6" style="border-right: 1px solid #eee;">
-                        <h4 class="text-success mb-3">Strengths 💪</h4>
-                        <ul class="list-unstyled">
-                            {% for record in strong_topics %}
-                            <!-- Safe formatting for template tags -->
-                            <li class="mb-2">
-                                {{ record.topic.subject.name }} - {{ record.topic.name }}
-                                ({{ record.percentage|floatformat:0 }}%)
-                            </li>
-                            {% empty %}
-                            <li class="text-muted">Keep practicing to build strengths!</li>
-                            {% endfor %}
-                        </ul>
+            <div class="skills-grid">
+                <!-- Strengths Section -->
+                <div class="skills-column">
+                    <div class="column-header text-success">
+                        <i class="fas fa-chart-line"></i>
+                        <h3>Your Strengths</h3>
                     </div>
-                    <div class="col-6">
-                        <h4 class="text-warning mb-3">Focus Areas 🎯</h4>
-                        <ul class="list-unstyled">
-                            {% for record in weak_topics %}
-                            <!-- Safe formatting for template tags -->
-                            <li class="mb-2">
-                                {{ record.topic.subject.name }} - {{ record.topic.name }}
-                                ({{ record.percentage|floatformat:0 }}%)
-                            </li>
-                            {% empty %}
-                            <li class="text-muted">Great job! No major gaps found.</li>
-                            {% endfor %}
-                        </ul>
+                    {% if strong_topics %}
+                    <div class="topics-list">
+                        {% for record in strong_topics %}
+                        <div class="topic-item strength">
+                            <div class="topic-info">
+                                <span class="subject-name">{{ record.topic.subject.name }}</span>
+                                <span class="topic-name">{{ record.topic.name }}</span>
+                            </div>
+                            <div class="topic-score">
+                                <div class="progress-bar-container">
+                                    <div class="progress-fill success" style="width: {{ record.percentage }}%"></div>
+                                </div>
+                                <span class="percentage">{{ record.percentage|floatformat:0 }}%</span>
+                            </div>
+                        </div>
+                        {% endfor %}
                     </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <p>Keep practicing to identify your core strengths!</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Focus Areas Section -->
+                <div class="skills-column border-left">
+                    <div class="column-header text-warning">
+                        <i class="fas fa-bullseye"></i>
+                        <h3>Focus Areas</h3>
+                    </div>
+                    {% if weak_topics %}
+                    <div class="topics-list">
+                        {% for record in weak_topics %}
+                        <div class="topic-item weakness">
+                            <div class="topic-info">
+                                <span class="subject-name">{{ record.topic.subject.name }}</span>
+                                <span class="topic-name">{{ record.topic.name }}</span>
+                            </div>
+                            <div class="topic-score">
+                                <div class="progress-bar-container">
+                                    <div class="progress-fill warning" style="width: {{ record.percentage }}%"></div>
+                                </div>
+                                <span class="percentage">{{ record.percentage|floatformat:0 }}%</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-trophy text-warning mb-2" style="font-size: 2rem;"></i>
+                        <p>Outstanding! No significant gaps found.</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Learning Path Section -->
-    <div class="mb-5">
-        <h2 class="section-title text-center mb-4">Your 7-Day Starter Plan</h2>
-        {% if learning_path %}
-        <div class="path-timeline" style="max-width: 800px; margin: 0 auto;">
-            {% for step in learning_path.steps.all %}
-            <div class="timeline-item d-flex mb-4 p-3 align-items-center"
-                style="background: white; border-radius: 12px; box-shadow: var(--shadow-sm); border-left: 5px solid {% if step.status == 'available' %}#28a745{% else %}#ccc{% endif %};">
-                <div class="step-number me-4 display-6 fw-bold text-muted" style="min-width: 60px;">0{{ step.step_number }}</div>
-                <div class="flex-grow-1">
-                    <h5 class="mb-1">{{ step.title }}</h5>
-                    <p class="mb-0 text-muted">{{ step.description }}</p>
+        <!-- 7-Day Plan Section -->
+        <div class="plan-section">
+            <h2 class="section-heading">Your 7-Day Starter Plan 🚀</h2>
+
+            {% if learning_path %}
+            <div class="timeline-container">
+                {% for step in learning_path.steps.all %}
+                <div class="timeline-step {% if step.status == 'completed' %}completed{% endif %}">
+                    <div class="step-marker">
+                        <span class="day-number">{{ step.step_number }}</span>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-header">
+                            <h4 class="step-title">{{ step.title }}</h4>
+                            <span class="step-status status-{{ step.status }}">{{ step.status|title }}</span>
+                        </div>
+                        <p class="step-desc">{{ step.description }}</p>
+                    </div>
                 </div>
-                <div>
-                    <span class="badge {% if step.status == 'available' %}bg-success{% else %}bg-secondary{% endif %}"
-                        style="color: white; padding: 0.5em;">
-                        {{ step.status|title }}
-                    </span>
-                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
+            {% else %}
+            <div class="alert-box warning">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Generating your personalized plan... Please refresh in a moment.</span>
+            </div>
+            {% endif %}
         </div>
-        {% else %}
-        <div class="alert alert-warning text-center">
-            Path generation pending. Please refresh in a moment.
-        </div>
-        {% endif %}
-    </div>
 
-    <div class="text-center">
-        <a href="{% url 'accounts:dashboard' %}" class="btn btn-primary btn-lg">Go to Dashboard</a>
+        <div class="action-footer">
+            <a href="{% url 'accounts:dashboard' %}" class="btn btn-primary btn-lg shine-effect">
+                Go to Dashboard <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
     </div>
 </div>
+
+<style>
+    /* Custom Styles for Diagnostic Results */
+    .diagnostic-page {
+        background-color: #f8fafc;
+        min-height: 100vh;
+    }
+
+    .hero-section {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        color: white;
+        padding: 4rem 1rem 8rem;
+        /* Extra padding bottom for overlap */
+        border-bottom-left-radius: 50% 20px;
+        border-bottom-right-radius: 50% 20px;
+        position: relative;
+    }
+
+    .hero-badge {
+        display: inline-block;
+        background: rgba(46, 204, 113, 0.2);
+        color: #2ecc71;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(46, 204, 113, 0.3);
+    }
+
+    .hero-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+    }
+
+    .hero-subtitle {
+        color: #94a3b8;
+        font-size: 1.1rem;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .content-container {
+        margin-top: -5rem;
+        /* Overlap hero */
+        padding-bottom: 4rem;
+        position: relative;
+        z-index: 10;
+    }
+
+    .results-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+        padding: 2.5rem;
+        margin-bottom: 3rem;
+    }
+
+    .readiness-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        border-bottom: 2px solid #f1f5f9;
+        padding-bottom: 2rem;
+    }
+
+    .readiness-header .label {
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    .level-display {
+        font-size: 3.5rem;
+        font-weight: 800;
+        color: #1e293b;
+        margin: 0;
+        background: linear-gradient(120deg, #3b82f6, #8b5cf6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .skills-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 3rem;
+    }
+
+    @media (max-width: 768px) {
+        .skills-grid {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        .skills-column.border-left {
+            border-left: none;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 2rem;
+        }
+    }
+
+    .skills-column.border-left {
+        border-left: 1px solid #f1f5f9;
+        padding-left: 2rem;
+    }
+
+    .column-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .column-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    .text-success {
+        color: #10b981;
+    }
+
+    .text-warning {
+        color: #f59e0b;
+    }
+
+    .topic-item {
+        margin-bottom: 1.25rem;
+    }
+
+    .topic-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.4rem;
+        font-size: 0.9rem;
+    }
+
+    .subject-name {
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .topic-name {
+        font-weight: 600;
+        color: #334155;
+    }
+
+    .progress-bar-container {
+        height: 8px;
+        background: #f1f5f9;
+        border-radius: 4px;
+        overflow: hidden;
+        flex-grow: 1;
+        margin-right: 1rem;
+    }
+
+    .topic-score {
+        display: flex;
+        align-items: center;
+    }
+
+    .progress-fill {
+        height: 100%;
+        border-radius: 4px;
+    }
+
+    .progress-fill.success {
+        background: #10b981;
+    }
+
+    .progress-fill.warning {
+        background: #f59e0b;
+    }
+
+    .percentage {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #475569;
+        min-width: 35px;
+        text-align: right;
+    }
+
+    /* Timeline Styles */
+    .plan-section {
+        max-width: 800px;
+        margin: 0 auto 4rem;
+    }
+
+    .section-heading {
+        text-align: center;
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: #1e293b;
+        margin-bottom: 2.5rem;
+    }
+
+    .timeline-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        position: relative;
+    }
+
+    .timeline-container::before {
+        content: '';
+        position: absolute;
+        left: 24px;
+        top: 20px;
+        bottom: 20px;
+        width: 2px;
+        background: #e2e8f0;
+        z-index: 0;
+    }
+
+    .timeline-step {
+        display: flex;
+        gap: 1.5rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .step-marker {
+        width: 50px;
+        height: 50px;
+        background: white;
+        border: 2px solid #e2e8f0;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: all 0.3s ease;
+    }
+
+    .timeline-step:hover .step-marker {
+        border-color: #3b82f6;
+        transform: scale(1.1);
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    }
+
+    .day-number {
+        font-weight: 700;
+        color: #64748b;
+    }
+
+    .timeline-step:hover .day-number {
+        color: #3b82f6;
+    }
+
+    .step-content {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        border: 1px solid #f1f5f9;
+        flex-grow: 1;
+        transition: transform 0.3s ease;
+    }
+
+    .timeline-step:hover .step-content {
+        transform: translateX(5px);
+        border-color: #cbd5e1;
+    }
+
+    .step-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .step-title {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #334155;
+    }
+
+    .step-status {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-available {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .status-locked {
+        background: #f1f5f9;
+        color: #64748b;
+    }
+
+    .status-completed {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .step-desc {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .action-footer {
+        text-align: center;
+    }
+
+    /* Effects */
+    .shine-effect {
+        overflow: hidden;
+        position: relative;
+    }
+
+    .shine-effect::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: 0.5s;
+    }
+
+    .shine-effect:hover::after {
+        left: 100%;
+    }
+</style>
 {% endblock %}
