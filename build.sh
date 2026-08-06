@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# exit on error
+set -o errexit
+
+if [ -d "ByteForge" ]; then
+  cd ByteForge
+fi
+
+pip install -r requirements.txt
+
+python manage.py collectstatic --no-input
+python manage.py migrate
