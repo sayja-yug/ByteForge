@@ -10,8 +10,10 @@ from django.db.models import Sum, Count
 from apps.learning.models import Topic, LearningResource, StudentPerformance
 from apps.assessments.models import Assessment, Question, QuizAttempt
 from apps.recommendations.models import Recommendation, LearningPath, LearningPathStep
-
-
+import json
+import logging
+from django.conf import settings
+from django.db import transaction
 class QuizGenerator:
     """Generate quizzes automatically based on topic and difficulty"""
     
@@ -344,12 +346,22 @@ class DiagnosticService:
             topics_to_cover.extend(list(other_topics))
         
         for topic in topics_to_cover:
+            if level == 'Beginner':
+                step_title = f"Day {step_num}: {topic.name} Basics"
+                step_desc = f"Focus on {topic.name} to build your foundation."
+            elif level == 'Intermediate':
+                step_title = f"Day {step_num}: Intermediate {topic.name}"
+                step_desc = f"Strengthen your understanding of {topic.name} concepts."
+            else:
+                step_title = f"Day {step_num}: Advanced {topic.name}"
+                step_desc = f"Master complex problems and applications in {topic.name}."
+                
             step = LearningPathStep.objects.create(
                 learning_path=path,
                 topic=topic,
                 step_number=step_num,
-                title=f"Day {step_num}: {topic.name} Basics",
-                description=f"Focus on {topic.name} to build your foundation.",
+                title=step_title,
+                description=step_desc,
                 status='available' if step_num == 1 else 'locked',
                 estimated_hours=1.5
             )
@@ -412,3 +424,102 @@ class DiagnosticService:
             
         # Generate Recommendations & Path
         return DiagnosticService.generate_recommendations(student_profile, aggregated_results)
+
+class DiagnosticGenerator:
+    """Generate personalized diagnostic tests using Groq AI"""
+    
+    @staticmethod
+    def generate_personalized_diagnostic(student_profile):
+        """
+        Dynamically generates a diagnostic assessment for the student using Groq AI,
+        based on their grade level.
+        """
+        from apps.learning.models import Topic
+        import os
+        
+        # Try to use groq client
+        try:
+            from groq import Groq
+            api_key = getattr(settings, 'GROQ_API_KEY', None) or os.environ.get('GROQ_API_KEY')
+            if not api_key:
+                logging.warning("No GROQ_API_KEY found, falling back to static generation")
+                return []
+                
+            client = Groq(api_key=api_key)
+            
+            # Select 2 random topics for the diagnostic
+            topics = Topic.objects.all().order_by('?')[:2]
+            if not topics:
+                return []
+                
+            assessments = []
+            
+            for topic in topics:
+                # Ask Groq to generate 3 MCQs
+                prompt = f"""You are an expert educator.
+Generate 3 multiple choice questions for a student in {student_profile.grade_level} on the topic of "{topic.name}" ({topic.subject.name}).
+Return the response strictly as a JSON array of objects, with no markdown formatting.
+Each object must have these keys:
+"question_text" (string)
+"options" (array of 4 string options)
+"correct_answer" (string, exact match of one of the options)
+"explanation" (string)
+"""
+                try:
+                    chat_completion = client.chat.completions.create(
+                        messages=[
+                            {"role": "system", "content": "You output JSON arrays ONLY."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        model="openai/gpt-oss-20b",
+                        temperature=0.7,
+                        max_tokens=1000,
+                    )
+                    
+                    response_text = chat_completion.choices[0].message.content.strip()
+                    # Clean up possible markdown code block
+                    if response_text.startswith("```json"):
+                        response_text = response_text[7:-3].strip()
+                    elif response_text.startswith("```"):
+                        response_text = response_text[3:-3].strip()
+                        
+                    questions_data = json.loads(response_text)
+                    
+                    # Create assessment
+                    with transaction.atomic():
+                        assessment = Assessment.objects.create(
+                            title=f"Diagnostic: {topic.name} ({student_profile.user.username})",
+                            description=f"Personalized diagnostic test for {student_profile.user.get_full_name()}",
+                            topic=topic,
+                            assessment_type='diagnostic',
+                            difficulty='medium',
+                            total_marks=len(questions_data) * 10,
+                            passing_marks=len(questions_data) * 6,
+                            is_ai_generated=True,
+                            is_published=True # Must be published to be visible
+                        )
+                        
+                        for i, q_data in enumerate(questions_data):
+                            Question.objects.create(
+                                assessment=assessment,
+                                question_text=q_data['question_text'],
+                                question_type='mcq',
+                                options=q_data['options'],
+                                correct_answer=q_data['correct_answer'],
+                                marks=10,
+                                difficulty='medium',
+                                bloom_level='understand',
+                                explanation=q_data.get('explanation', ''),
+                                order=i + 1
+                            )
+                        
+                        assessments.append(assessment)
+                except Exception as e:
+                    logging.error(f"Groq API error for topic {topic.name}: {str(e)}")
+                    continue
+                    
+            return assessments
+        except ImportError:
+            logging.error("Groq package not installed")
+            return []
+

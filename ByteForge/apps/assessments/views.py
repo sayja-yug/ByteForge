@@ -13,7 +13,7 @@ from django.db.models import Sum
 from apps.learning.models import Topic, StudentPerformance
 from apps.recommendations.models import LearningPath
 from .models import Assessment, Question, QuizAttempt, QuestionResponse
-from .services import QuizGenerator
+from .services import QuizGenerator, DiagnosticService
 
 
 @login_required
@@ -410,10 +410,28 @@ def diagnostic_assessment(request):
         messages.info(request, "You have already completed the diagnostic assessment.")
         return redirect('accounts:dashboard') # Or wherever
 
-    # Fetch all diagnostic assessments
+    # Fetch personalized diagnostic assessments for this student
+    username = student.user.username
     assessments = Assessment.objects.filter(
-        assessment_type='diagnostic', is_published=True
+        assessment_type='diagnostic', 
+        is_published=True,
+        title__endswith=f"({username})"
     ).select_related('topic', 'topic__subject').prefetch_related('questions')
+
+    # If no personalized assessments exist, generate them
+    if not assessments.exists():
+        from .services import DiagnosticGenerator
+        generated_assessments = DiagnosticGenerator.generate_personalized_diagnostic(student)
+        
+        if generated_assessments:
+            # Re-fetch to load relations
+            assessments = Assessment.objects.filter(id__in=[a.id for a in generated_assessments]).select_related('topic', 'topic__subject').prefetch_related('questions')
+        else:
+            # Fallback to any published diagnostic assessments
+            assessments = Assessment.objects.filter(
+                assessment_type='diagnostic', is_published=True
+            ).select_related('topic', 'topic__subject').prefetch_related('questions')
+
 
     if request.method == 'POST':
         attempts = []
@@ -460,7 +478,6 @@ def diagnostic_assessment(request):
             attempt.save()
             
             # Analyze individual attempt (create StudentPerformance)
-            from .services import DiagnosticService
             DiagnosticService.calculate_scores(student, attempt)
             attempts.append(attempt)
         
@@ -512,15 +529,18 @@ def diagnostic_results(request):
     strong_topics = performances.filter(percentage__gte=80)
     
     classification = "Learner"
+    total_score = 0
     if learning_path:
-        # We stored level in generation_criteria
+        # We stored level and score in generation_criteria
         classification = learning_path.generation_criteria.get('level', 'Learner')
+        total_score = learning_path.generation_criteria.get('score', 0)
 
     context = {
         'student': student,
         'learning_path': learning_path,
         'weak_topics': weak_topics,
         'strong_topics': strong_topics,
-        'classification': classification
+        'classification': classification,
+        'total_score': total_score,
     }
     return render(request, 'assessments/diagnostic_results.html', context)
